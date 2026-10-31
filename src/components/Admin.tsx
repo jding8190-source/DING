@@ -661,15 +661,15 @@ export default function Admin() {
           <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-widest">STUDIO CMS PORTAL</span>
         </div>
 
-        <div className="max-w-md w-full mx-auto my-auto py-10 px-8 bg-zinc-950/80 border border-white/10 rounded-2xl backdrop-blur-2xl text-center space-y-6 shadow-2xl">
+        <div className="max-w-md w-full mx-auto my-auto py-10 px-8 apple-glass-card glass-rim-top border border-white/15 rounded-[2.5rem] text-center space-y-6 shadow-[0_30px_80px_rgba(0,0,0,0.85)]">
           <div className="space-y-3">
-            <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center mx-auto text-amber-400">
+            <div className="w-12 h-12 apple-glass-capsule border border-white/20 rounded-2xl flex items-center justify-center mx-auto text-amber-400 shadow-md">
               <Sparkles size={24} />
             </div>
             <h1 className="text-2xl font-bold tracking-tight uppercase text-white font-sans">
               全站内容管理后台
             </h1>
-            <p className="text-xs text-zinc-400 leading-relaxed font-sans">
+            <p className="text-xs text-zinc-300 leading-relaxed font-sans">
               自主调整网站所有模块内容、目录菜单、作品图集、长图及独立视频窗口，一键保存即时生效。
             </p>
           </div>

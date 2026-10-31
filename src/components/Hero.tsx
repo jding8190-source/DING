@@ -62,8 +62,9 @@ export default function Hero() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="inline-flex items-center text-zinc-400 font-medium tracking-widest text-xs uppercase"
+              className="inline-flex items-center gap-2 apple-glass-capsule glass-rim-top px-4 py-1.5 rounded-full text-zinc-300 font-mono tracking-widest text-[11px] uppercase border border-white/20 shadow-[0_8px_24px_rgba(0,0,0,0.5)]"
             >
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]" />
               <span>{settings.heroTagline || 'Creative Exhibition Lab'}</span>
             </motion.div>
             
@@ -80,10 +81,19 @@ export default function Hero() {
           >
             <button 
               onClick={() => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' })}
-              className="group flex items-center gap-4 bg-white hover:bg-neutral-200 text-black px-10 py-4.5 rounded-full transition-all duration-300 cursor-pointer text-xs font-semibold tracking-widest uppercase shadow-2xl hover:scale-[1.02]"
+              className="group relative flex items-center gap-4 bg-white hover:bg-neutral-100 text-black px-10 py-4.5 rounded-full transition-all duration-300 cursor-pointer text-xs font-semibold tracking-widest uppercase shadow-[0_10px_35px_rgba(255,255,255,0.25)] hover:scale-[1.02] active:scale-95"
             >
-              {settings.heroCtaText || 'Enter Exhibition'}
-              <ArrowDownRight size={14} className="group-hover:translate-x-1 group-hover:translate-y-1 transition-transform duration-300" />
+              <span>{settings.heroCtaText || 'Enter Exhibition'}</span>
+              <div className="w-6 h-6 rounded-full bg-black/5 flex items-center justify-center">
+                <ArrowDownRight size={14} className="group-hover:translate-x-0.5 group-hover:translate-y-0.5 transition-transform duration-300" />
+              </div>
+            </button>
+
+            <button 
+              onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+              className="apple-glass-button apple-glass-interactive text-white/90 hover:text-white px-8 py-4.5 rounded-full text-xs font-mono tracking-widest uppercase flex items-center gap-2"
+            >
+              <span>关于作品 / ABOUT</span>
             </button>
           </motion.div>
         </motion.div>
@@ -93,15 +103,15 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.0 }}
-          className="lg:col-span-4 flex flex-col items-start lg:items-end gap-3 text-right font-mono text-[10px] text-zinc-400 uppercase tracking-widest -translate-y-[200px] lg:-translate-y-[200px]"
+          className="lg:col-span-4 flex flex-col items-start lg:items-end gap-3 text-right font-mono text-[10px] text-zinc-300 uppercase tracking-widest -translate-y-[200px] lg:-translate-y-[200px]"
         >
-          <div className="flex items-center gap-2 text-zinc-400 text-[10px] bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>{settings.heroExhibitTag || 'PORTFOLIO CURATION 2024-2026'}</span>
+          <div className="apple-glass-capsule glass-rim-top flex items-center gap-2.5 px-4 py-2 rounded-full border border-white/20 shadow-[0_10px_30px_rgba(0,0,0,0.6)]">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
+            <span className="text-zinc-200 font-semibold tracking-wider">{settings.heroExhibitTag || 'PORTFOLIO CURATION 2024-2026'}</span>
           </div>
-          <span className="text-zinc-500 text-[9px] tracking-widest">
+          <div className="apple-glass px-3.5 py-1.5 rounded-xl border border-white/10 text-zinc-400 text-[10px] tracking-wider">
             {settings.heroLocation || 'SHANGHAI / TOKYO / REMOTE'}
-          </span>
+          </div>
         </motion.div>
 
       </div>

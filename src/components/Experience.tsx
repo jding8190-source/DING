@@ -57,15 +57,26 @@ export default function Experience() {
   }, []);
 
   return (
-    <section id="experience" className="py-40 px-6 bg-[#080808] border-t border-white/[0.03]">
-      <div className="max-w-[1440px] mx-auto w-full px-6 lg:px-12">
+    <section id="experience" className="py-40 px-6 bg-[#080808] border-t border-white/[0.04] relative overflow-hidden">
+      {/* Soft Ambient Refraction */}
+      <div className="absolute top-[20%] right-[-15%] w-[50vw] h-[50vw] bg-amber-500/[0.02] blur-[140px] rounded-full pointer-events-none" />
+
+      <div className="max-w-[1440px] mx-auto w-full px-6 lg:px-12 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
           <div className="lg:col-span-4">
-            <span className="text-meta sticky top-40 text-amber-400/80">Work History & Experience</span>
-            <h2 className="text-display text-3xl font-light text-white mt-4">职业履历与经历</h2>
+            <div className="sticky top-40 space-y-4">
+              <div className="apple-glass-capsule glass-rim-top px-3.5 py-1.5 rounded-full border border-white/15 inline-flex items-center gap-2 text-[10px] font-mono tracking-widest uppercase text-amber-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]" />
+                <span>Work History & Experience</span>
+              </div>
+              <h2 className="text-display text-4xl font-light text-white leading-tight">
+                职业履历与经历 <br />
+                <span className="text-zinc-600 font-serif italic text-2xl font-normal">curated milestones.</span>
+              </h2>
+            </div>
           </div>
           
-          <div className="lg:col-span-8 space-y-24">
+          <div className="lg:col-span-8 space-y-8">
             {experiences.map((exp, index) => (
               <motion.div 
                 key={exp.id || index}
@@ -73,26 +84,26 @@ export default function Experience() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className="group relative"
+                className="apple-glass-card apple-glass-interactive glass-rim-top p-7 sm:p-9 rounded-[2.2rem] border border-white/10 hover:border-white/25 shadow-xl transition-all duration-500 group"
               >
-                <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4 mb-4">
-                  <h3 className="text-display text-2xl font-light tracking-tight text-white">{exp.role}</h3>
-                  <span className="font-mono text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <h3 className="text-display text-2xl font-light tracking-tight text-white group-hover:text-amber-200/90 transition-colors">
+                    {exp.role}
+                  </h3>
+                  <span className="apple-glass-capsule text-amber-300 border border-amber-400/30 px-3.5 py-1 rounded-full text-xs font-mono tracking-wider bg-amber-500/10 shadow-sm shrink-0 self-start sm:self-auto">
                     {exp.period}
                   </span>
                 </div>
                 
-                <div className="space-y-4">
-                  <h4 className="text-subheading text-base font-medium text-zinc-300">
-                    @{exp.company}
+                <div className="space-y-3">
+                  <h4 className="text-subheading text-sm font-semibold tracking-wide text-zinc-300 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                    <span>@{exp.company}</span>
                   </h4>
-                  <p className="text-body max-w-2xl text-zinc-400 leading-relaxed font-light text-sm">
+                  <p className="text-zinc-400 leading-relaxed font-light text-sm">
                     {exp.description}
                   </p>
                 </div>
-                
-                {/* Visual Separator */}
-                <div className="mt-12 w-full h-px bg-white/[0.04] origin-left scale-x-100 transition-transform duration-1000" />
               </motion.div>
             ))}
           </div>

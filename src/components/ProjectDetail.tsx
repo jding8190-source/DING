@@ -156,46 +156,46 @@ export default function ProjectDetail() {
       exit={{ opacity: 0 }}
       className="bg-[#080808] min-h-screen pb-40 text-zinc-100"
     >
-      {/* Top Floating Nav */}
-      <nav className="fixed top-0 left-0 w-full z-50 bg-[#080808]/85 backdrop-blur-xl px-6 py-6 border-b border-white/5">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-white group-hover:text-black transition-all duration-300">
-              <ArrowLeft size={14} />
+      {/* Top Floating Apple Liquid Glass Nav */}
+      <nav className="fixed top-0 left-0 w-full z-50 px-4 sm:px-8 pt-4 pointer-events-none">
+        <div className="max-w-6xl mx-auto pointer-events-auto">
+          <div className="apple-glass-capsule glass-rim-top rounded-full px-5 sm:px-7 py-3 flex justify-between items-center text-zinc-100 transition-all duration-300">
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-8 h-8 rounded-full apple-glass-button flex items-center justify-center transition-all duration-300">
+                <ArrowLeft size={14} className="text-zinc-300 group-hover:text-white group-hover:-translate-x-0.5 transition-transform" />
+              </div>
+              <span className="text-[10px] uppercase tracking-[0.25em] font-mono text-zinc-400 group-hover:text-white transition-colors">
+                BACK TO HOME
+              </span>
+            </Link>
+            <div className="flex items-center gap-3">
+               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+               <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-zinc-200 font-semibold truncate max-w-[160px] sm:max-w-xs">
+                 {project.title}
+               </span>
             </div>
-            <span className="text-[10px] uppercase tracking-[0.3em] font-mono text-zinc-400 group-hover:text-white transition-colors">
-              BACK TO HOME
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-             <span className="text-[10px] uppercase tracking-[0.2em] font-mono text-zinc-300 font-bold truncate max-w-[200px] sm:max-w-xs">
-               {project.title}
-             </span>
           </div>
         </div>
       </nav>
 
       {/* Hero Header */}
-      <section className="pt-52 px-6 mb-28 text-center relative overflow-hidden">
-        <div className="max-w-5xl mx-auto relative z-10 space-y-8">
+      <section className="pt-48 px-6 mb-24 text-center relative overflow-hidden">
+        <div className="max-w-5xl mx-auto relative z-10 space-y-6">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center gap-6"
+            className="flex items-center justify-center gap-4"
           >
-            <div className="w-12 h-[1px] bg-zinc-800"></div>
-            <span className="font-mono text-[10px] uppercase tracking-[0.5em] text-amber-400/90 font-medium">
+            <div className="apple-glass-capsule glass-rim-top px-4 py-1.5 rounded-full border border-white/15 text-amber-300 font-mono text-[10px] uppercase tracking-[0.3em] font-medium shadow-md">
                {project.category} · {project.year}
-            </span>
-            <div className="w-12 h-[1px] bg-zinc-800"></div>
+            </div>
           </motion.div>
           
           <motion.h1 
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[clamp(2.5rem,7vw,6.5rem)] font-sans font-bold text-white leading-[1.05] tracking-[-0.03em]"
+            className="text-[clamp(2.5rem,6.5vw,5.5rem)] font-sans font-bold text-white leading-[1.05] tracking-[-0.03em]"
           >
             {project.title}
           </motion.h1>
@@ -207,7 +207,7 @@ export default function ProjectDetail() {
               transition={{ delay: 0.3 }}
               className="max-w-2xl mx-auto"
             >
-              <p className="text-lg md:text-xl font-light text-zinc-400 leading-relaxed font-sans">
+              <p className="text-base md:text-lg font-light text-zinc-300 leading-relaxed font-sans">
                  {project.description}
               </p>
             </motion.div>
@@ -219,7 +219,7 @@ export default function ProjectDetail() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex flex-wrap items-center justify-center gap-3 pt-4"
+              className="flex flex-wrap items-center justify-center gap-3 pt-2"
             >
               {(project.externalLinks || []).map((link, idx) => (
                 <a
@@ -227,7 +227,7 @@ export default function ProjectDetail() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white text-white hover:text-black px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 border border-white/10 shadow-lg"
+                  className="apple-glass-button apple-glass-interactive inline-flex items-center gap-2 text-white px-6 py-2.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all duration-300 border border-white/20 shadow-lg"
                 >
                   <ExternalLink size={13} /> {link.label || '访问链接'}
                 </a>
@@ -237,9 +237,9 @@ export default function ProjectDetail() {
                   href={project.embedUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-amber-500/20 hover:bg-amber-400 text-amber-300 hover:text-black border border-amber-500/30 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300"
+                  className="apple-glass-capsule inline-flex items-center gap-2 bg-amber-500/15 hover:bg-amber-400 text-amber-300 hover:text-black border border-amber-400/30 px-6 py-2.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all duration-300 shadow-lg"
                 >
-                  <Sparkles size={13} /> 原型体验 (Prototype)
+                  <Sparkles size={13} className="text-amber-400" /> 原型体验 (Prototype)
                 </a>
               )}
             </motion.div>
@@ -248,13 +248,13 @@ export default function ProjectDetail() {
       </section>
 
       {/* Main Cover Banner */}
-      <section className="px-6 mb-32 lg:px-16">
+      <section className="px-6 mb-28 lg:px-16">
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           viewport={{ once: true }}
-          className="max-w-7xl mx-auto relative aspect-[16/9] md:aspect-[21/9] overflow-hidden bg-zinc-950 rounded-2xl border border-white/10 shadow-[0_60px_100px_rgba(0,0,0,0.8)]"
+          className="max-w-7xl mx-auto relative aspect-[16/9] md:aspect-[21/9] overflow-hidden apple-glass-card glass-rim-top rounded-[2.5rem] border border-white/15 shadow-[0_40px_90px_rgba(0,0,0,0.8)]"
         >
           {project.imageUrl && (
             <img 
@@ -267,18 +267,18 @@ export default function ProjectDetail() {
         </motion.div>
       </section>
 
-      {/* Info Meta Grid */}
-      <section className="px-6 py-16 mb-32 border-y border-white/[0.04] bg-white/[0.01]">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+      {/* Info Meta Grid with Apple Liquid Glass Spec Card */}
+      <section className="px-6 mb-28 max-w-7xl mx-auto">
+        <div className="apple-glass-card glass-rim-top p-6 sm:p-8 rounded-[2.2rem] border border-white/15 shadow-xl grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { label: 'Client / 客户', value: project.client || 'Direct Commission' },
-            { label: 'Role / 担任角色', value: project.role || 'Design Lead' },
-            { label: 'Year / 创作年份', value: project.year || '2024' },
-            { label: 'Category / 目录分类', value: project.category || 'Portfolio' }
+            { label: 'Client / 客户', value: project.client || 'Direct Commission', color: 'text-amber-400' },
+            { label: 'Role / 担任角色', value: project.role || 'Design Lead', color: 'text-purple-400' },
+            { label: 'Year / 创作年份', value: project.year || '2024', color: 'text-emerald-400' },
+            { label: 'Category / 目录分类', value: project.category || 'Portfolio', color: 'text-blue-400' }
           ].map((item) => (
-            <div key={item.label} className="space-y-2">
-              <h4 className="font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-bold">{item.label}</h4>
-              <p className="text-white text-sm font-medium tracking-wide">{item.value}</p>
+            <div key={item.label} className="space-y-1.5 apple-glass p-4 rounded-2xl border border-white/10">
+              <h4 className="font-mono text-[9px] uppercase tracking-[0.25em] text-zinc-400 font-bold">{item.label}</h4>
+              <p className="text-white text-sm font-semibold tracking-wide truncate">{item.value}</p>
             </div>
           ))}
         </div>
