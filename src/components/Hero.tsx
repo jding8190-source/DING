@@ -2,19 +2,12 @@ import { useState, useEffect, ChangeEvent, DragEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowDownRight, Upload, RotateCcw } from 'lucide-react';
 
-export default function Hero() {
-  const [imgSrc, setImgSrc] = useState<string>('/hero_bg.png');
-  const [isCustom, setIsCustom] = useState(false);
-  const [pathIndex, setPathIndex] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
+const DEFAULT_HERO_BG = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=100&w=2400';
 
-  // List of paths or URLs we check in order if they fail to load
-  const fallbackPaths = [
-    '/hero_bg.png',
-    '/src/components/hero_bg.png',
-    '/src/assets/hero_bg.png',
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=100&w=2400'
-  ];
+export default function Hero() {
+  const [imgSrc, setImgSrc] = useState<string>(DEFAULT_HERO_BG);
+  const [isCustom, setIsCustom] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Read saved image from localStorage securely on mount
   useEffect(() => {
@@ -26,11 +19,8 @@ export default function Hero() {
   }, []);
 
   const handleImageError = () => {
-    if (imgSrc.startsWith('data:')) return; // Don't fall back from successfully loaded user base64 content
-    
-    if (pathIndex < fallbackPaths.length) {
-      setImgSrc(fallbackPaths[pathIndex]);
-      setPathIndex(prev => prev + 1);
+    if (imgSrc !== DEFAULT_HERO_BG) {
+      setImgSrc(DEFAULT_HERO_BG);
     }
   };
 
@@ -79,9 +69,8 @@ export default function Hero() {
 
   const handleResetImage = () => {
     localStorage.removeItem('hero_custom_bg');
-    setImgSrc(fallbackPaths[3]); // reset directly to our high-quality Unsplash image
+    setImgSrc(DEFAULT_HERO_BG);
     setIsCustom(false);
-    setPathIndex(fallbackPaths.length);
   };
 
   return (

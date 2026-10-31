@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import Home from './components/Home';
 import ProjectDetail from './components/ProjectDetail';
@@ -25,6 +25,7 @@ function AnimatedRoutes() {
             <Route path="/admin" element={<Admin />} />
             <Route path="/project/:id" element={<ProjectDetail />} />
             <Route path="/archive" element={<Archive />} />
+            <Route path="*" element={<Home />} />
           </Routes>
         </motion.div>
       </AnimatePresence>
