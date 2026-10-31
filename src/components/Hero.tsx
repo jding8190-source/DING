@@ -3,16 +3,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowDownRight, Upload, RotateCcw } from 'lucide-react';
 
 const DEFAULT_HERO_BG = './hero_bg.png';
-const FALLBACK_DARK_BG = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=100&w=2400';
+const FALLBACK_DARK_BG = './hero_bg.png';
 
 export default function Hero() {
   const [imgSrc, setImgSrc] = useState<string>(DEFAULT_HERO_BG);
   const [isCustom, setIsCustom] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Read saved image from localStorage securely on mount
+  // Clear any old legacy cache and load custom background if explicitly set
   useEffect(() => {
-    const saved = localStorage.getItem('hero_custom_bg');
+    localStorage.removeItem('hero_custom_bg'); // Purge previous test cache
+    const saved = localStorage.getItem('hero_custom_bg_v2');
     if (saved) {
       setImgSrc(saved);
       setIsCustom(true);
@@ -36,7 +37,7 @@ export default function Hero() {
         setImgSrc(base64String);
         setIsCustom(true);
         try {
-          localStorage.setItem('hero_custom_bg', base64String);
+          localStorage.setItem('hero_custom_bg_v2', base64String);
         } catch (err) {
           console.warn('Storage limit exceeded, custom image shown in session only.');
         }
@@ -72,7 +73,7 @@ export default function Hero() {
   };
 
   const handleResetImage = () => {
-    localStorage.removeItem('hero_custom_bg');
+    localStorage.removeItem('hero_custom_bg_v2');
     setImgSrc(DEFAULT_HERO_BG);
     setIsCustom(false);
   };
@@ -93,13 +94,13 @@ export default function Hero() {
             <img 
               src={imgSrc}
               onError={handleImageError}
-              className="w-full h-full object-cover transition-transform duration-[3000ms] ease-out scale-[1.01] opacity-75"
+              className="w-full h-full object-cover object-[center_35%] lg:object-center transition-transform duration-[3000ms] ease-out scale-[1.01] opacity-90"
               alt="Dark Cinematic Workspace Base"
               referrerPolicy="no-referrer"
             />
             {/* Ambient vignette and dark contrast overlays to maintain luxury dark aesthetic */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-[#050505]/40 pointer-events-none" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/60 via-transparent to-[#050505]/60 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-[#050505]/40 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/50 via-transparent to-[#050505]/50 pointer-events-none" />
           </>
         ) : null}
       </div>
