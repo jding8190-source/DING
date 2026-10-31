@@ -15,7 +15,7 @@ export default function Footer() {
           <a href="#" className="hover:text-white transition-colors">LinkedIn</a>
           <a href="#" className="hover:text-white transition-colors">Dribbble</a>
           <a href="#" className="hover:text-white transition-colors">Behance</a>
-          <a href="#" className="hover:text-white transition-colors">Archive</a>
+          <a href="#/admin" className="hover:text-amber-400 text-zinc-400 transition-colors">CMS 后台</a>
         </div>
         
         <div className="flex items-center gap-8">

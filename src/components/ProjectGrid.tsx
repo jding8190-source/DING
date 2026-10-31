@@ -18,7 +18,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { db } from '../lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 
 const categories = ['全部', '项目应用', '品牌视觉', '运营设计'];
 
@@ -34,26 +34,37 @@ export default function ProjectGrid() {
   const [autoplay, setAutoplay] = useState(false); // Play status
   const [isDrawing, setIsDrawing] = useState(false);
 
-  // Fetch from Firebase
+  // Real-time synchronization with Firestore
   useEffect(() => {
-    async function fetchProjects() {
-      try {
-        const q = query(collection(db, 'projects'), orderBy('year', 'desc'));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-          const fetchedProjects = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setProjects(fetchedProjects);
+    let unsubscribe: () => void = () => {};
+    try {
+      const q = query(collection(db, 'projects'), orderBy('year', 'desc'));
+      unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          if (!querySnapshot.empty) {
+            const fetchedProjects = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            setProjects(fetchedProjects);
+          } else {
+            setProjects(staticProjects);
+          }
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Error listening to projects:', error);
+          setProjects(staticProjects);
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-      } finally {
-        setLoading(false);
-      }
+      );
+    } catch (err) {
+      console.error('Firestore snapshot setup error:', err);
+      setProjects(staticProjects);
+      setLoading(false);
     }
-    fetchProjects();
+    return () => unsubscribe();
   }, []);
 
   const filteredProjects = useMemo(() => {

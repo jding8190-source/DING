@@ -45,6 +45,13 @@ export default function Navigation() {
               {link.name}
             </motion.a>
           ))}
+          <Link
+            to="/admin"
+            className="text-[11px] font-mono text-zinc-500 hover:text-amber-400 border border-white/5 hover:border-amber-500/30 px-2.5 py-1 rounded-md transition-colors"
+            title="作品管理后台"
+          >
+            CMS 后台
+          </Link>
           <div className="w-px h-4 bg-zinc-800 mx-2"></div>
           <span className="text-[11px] font-semibold text-zinc-500 tracking-wider">INDEX ©24</span>
         </div>
@@ -75,6 +82,13 @@ export default function Navigation() {
                 {link.name}
               </a>
             ))}
+            <Link
+              to="/admin"
+              onClick={() => setIsOpen(false)}
+              className="font-mono text-sm tracking-widest uppercase text-amber-400 py-2"
+            >
+              CMS 后台管理
+            </Link>
           </div>
         </motion.div>
       )}

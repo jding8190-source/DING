@@ -14,28 +14,27 @@ export default function ProjectDetail() {
   useEffect(() => {
     window.scrollTo(0, 0);
     async function fetchProject() {
-      // First check static
-      const staticProj = staticProjects.find(p => p.id === id);
-      if (staticProj) {
-        setProject(staticProj);
-        setLoading(false);
-        return;
-      }
-
-      // Then check Firebase
+      // First check Firebase for live saved project
       try {
         if (id) {
           const docRef = doc(db, 'projects', id);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             setProject({ id: docSnap.id, ...docSnap.data() });
+            setLoading(false);
+            return;
           }
         }
       } catch (error) {
-        console.error('Error fetching project:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching project from Firestore:', error);
       }
+
+      // Fallback to static initial projects
+      const staticProj = staticProjects.find(p => p.id === id);
+      if (staticProj) {
+        setProject(staticProj);
+      }
+      setLoading(false);
     }
     fetchProject();
   }, [id]);
