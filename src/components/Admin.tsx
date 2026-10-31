@@ -56,6 +56,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { projects as initialProjects } from '../constants';
+import { staticExperiences } from './Experience';
 import { useSiteSettings, DEFAULT_SETTINGS } from '../lib/settings';
 import { Project, ExternalLink as ExternalLinkType, SiteSettings } from '../types';
 
@@ -113,6 +114,17 @@ export default function Admin() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deleteConfirmItem, setDeleteConfirmItem] = useState<{ id: string; title: string } | null>(null);
+
+  // Experience editing state
+  const [isExpModalOpen, setIsExpModalOpen] = useState(false);
+  const [editingExp, setEditingExp] = useState<any>(null);
+  const [expFormData, setExpFormData] = useState({
+    company: '',
+    role: '',
+    period: '',
+    description: ''
+  });
+  const [deleteConfirmExp, setDeleteConfirmExp] = useState<{ id: string; role: string; company: string } | null>(null);
 
   // File Inputs
   const coverFileInputRef = useRef<HTMLInputElement>(null);
@@ -412,6 +424,89 @@ export default function Admin() {
       setFormData(DEFAULT_PROJECT_FORM);
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, 'projects');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Experience Handlers
+  const handleOpenAddExp = () => {
+    setEditingExp(null);
+    setExpFormData({
+      company: '',
+      role: '',
+      period: '2024 — Present',
+      description: ''
+    });
+    setIsExpModalOpen(true);
+  };
+
+  const handleOpenEditExp = (exp: any) => {
+    setEditingExp(exp);
+    setExpFormData({
+      company: exp.company || '',
+      role: exp.role || '',
+      period: exp.period || '',
+      description: exp.description || ''
+    });
+    setIsExpModalOpen(true);
+  };
+
+  const handleSubmitExp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expFormData.company.trim() || !expFormData.role.trim() || !expFormData.period.trim()) {
+      showToast('请完整填写公司、职位和周期');
+      return;
+    }
+    setSaving(true);
+    try {
+      if (editingExp) {
+        await updateDoc(doc(db, 'experiences', editingExp.id), {
+          company: expFormData.company.trim(),
+          role: expFormData.role.trim(),
+          period: expFormData.period.trim(),
+          description: expFormData.description.trim(),
+          updatedAt: serverTimestamp()
+        });
+        showToast('履历修改已成功保存！前台网站已实时同步更新。');
+      } else {
+        await addDoc(collection(db, 'experiences'), {
+          company: expFormData.company.trim(),
+          role: expFormData.role.trim(),
+          period: expFormData.period.trim(),
+          description: expFormData.description.trim(),
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        showToast('新履历已成功添加并发布！');
+      }
+      setIsExpModalOpen(false);
+      setEditingExp(null);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'experiences');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const seedExperiences = async () => {
+    setSaving(true);
+    try {
+      let count = 0;
+      for (const exp of staticExperiences) {
+        await addDoc(collection(db, 'experiences'), {
+          company: exp.company,
+          role: exp.role,
+          period: exp.period,
+          description: exp.description,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        count++;
+      }
+      showToast(`成功同步导入 ${count} 条初始履历！现在可直接在线修改。`);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'experiences');
     } finally {
       setSaving(false);
     }
@@ -1076,36 +1171,91 @@ export default function Admin() {
         {/* TAB 4: EXPERIENCES */}
         {activeTab === 'experiences' && (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h3 className="text-sm font-bold uppercase tracking-wider text-white">职业经历列表</h3>
-                <p className="text-xs text-zinc-500">展示在关于页面的工作历史履历</p>
+                <h3 className="text-base font-bold uppercase tracking-wider text-white">职业经历与履历管理</h3>
+                <p className="text-xs text-zinc-400 mt-0.5">支持在线新增、修改、调整工作履历内容，修改后前台网站即时同步生效</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {experiences.length === 0 && (
+                  <button 
+                    type="button"
+                    onClick={seedExperiences}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 px-4 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer"
+                  >
+                    <Database size={14} /> 一键导入初始履历
+                  </button>
+                )}
+                <button 
+                  type="button"
+                  onClick={handleOpenAddExp}
+                  className="flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-black px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg cursor-pointer"
+                >
+                  <Plus size={15} /> 新增履历条目
+                </button>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {experiences.map((exp) => (
-                <div key={exp.id} className="bg-zinc-950 border border-white/5 p-6 rounded-2xl flex justify-between items-center">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-3">
-                      <h4 className="font-bold text-white text-sm">{exp.role}</h4>
-                      <span className="text-xs text-amber-400 font-mono">@{exp.company}</span>
-                      <span className="text-xs text-zinc-500 font-mono">{exp.period}</span>
-                    </div>
-                    <p className="text-xs text-zinc-400">{exp.description}</p>
-                  </div>
+            {experiences.length === 0 ? (
+              <div className="text-center py-20 border border-dashed border-zinc-800 rounded-3xl bg-zinc-950/40 p-8 space-y-4">
+                <Briefcase className="mx-auto text-zinc-500" size={32} />
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider">暂无自定义履历数据</h4>
+                <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+                  前台正在展示默认内置的 3 条履历。您可以点击下方按钮一键导入到数据库，立即在线编辑修改。
+                </p>
+                <div className="pt-2 flex justify-center gap-3">
                   <button 
-                    onClick={async () => {
-                      await deleteDoc(doc(db, 'experiences', exp.id));
-                      showToast('经历已删除');
-                    }}
-                    className="text-red-400 hover:text-red-300 p-2 cursor-pointer"
+                    onClick={seedExperiences}
+                    className="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
                   >
-                    <Trash2 size={16} />
+                    <Database size={14} /> 一键导入初始履历
+                  </button>
+                  <button 
+                    onClick={handleOpenAddExp}
+                    className="flex items-center gap-2 bg-zinc-900 border border-white/10 text-white px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                  >
+                    <Plus size={14} /> 新建全新履历
                   </button>
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {experiences.map((exp) => (
+                  <div key={exp.id} className="bg-zinc-950 border border-white/5 hover:border-white/20 p-6 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors group">
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h4 className="font-bold text-white text-base">{exp.role}</h4>
+                        <span className="text-xs text-amber-400 font-mono">@{exp.company}</span>
+                        <span className="text-[11px] text-zinc-400 font-mono bg-zinc-900 border border-white/5 px-2.5 py-0.5 rounded-full">
+                          {exp.period}
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-400 leading-relaxed font-light max-w-3xl">
+                        {exp.description}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button 
+                        onClick={() => handleOpenEditExp(exp)}
+                        className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer"
+                      >
+                        <Edit3 size={13} /> 编辑
+                      </button>
+                      <button 
+                        onClick={() => setDeleteConfirmExp({ id: exp.id, role: exp.role, company: exp.company })}
+                        className="flex items-center gap-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 p-2 rounded-lg transition-colors cursor-pointer"
+                        title="删除此履历"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -1575,6 +1725,165 @@ export default function Admin() {
                         showToast('作品已成功删除！');
                       } catch (error) {
                         handleFirestoreError(error, OperationType.DELETE, `projects/${item.id}`);
+                      }
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  确认删除
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* EXPERIENCE ADD / EDIT MODAL */}
+      <AnimatePresence>
+        {isExpModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="bg-[#0D0D0D] border border-white/10 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 sm:p-8 space-y-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2 text-amber-400">
+                  <Briefcase size={20} />
+                  <h3 className="text-base font-bold text-white tracking-wide">
+                    {editingExp ? '编辑履历条目' : '新增履历条目'}
+                  </h3>
+                </div>
+                <button 
+                  onClick={() => setIsExpModalOpen(false)}
+                  className="text-zinc-500 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitExp} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                    担任职位 / 角色 <span className="text-amber-400">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    value={expFormData.role}
+                    onChange={(e) => setExpFormData(prev => ({ ...prev, role: e.target.value }))}
+                    placeholder="例如：Senior UI/UX Designer 或 视觉总监"
+                    className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-400"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                      公司 / 机构名称 <span className="text-amber-400">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={expFormData.company}
+                      onChange={(e) => setExpFormData(prev => ({ ...prev, company: e.target.value }))}
+                      placeholder="例如：STUDIO DING"
+                      className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-400"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                      时间周期 <span className="text-amber-400">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      value={expFormData.period}
+                      onChange={(e) => setExpFormData(prev => ({ ...prev, period: e.target.value }))}
+                      placeholder="例如：2022 - PRESENT 或 2020 - 2022"
+                      className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-400"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+                    工作职责与成就描述
+                  </label>
+                  <textarea 
+                    rows={4}
+                    value={expFormData.description}
+                    onChange={(e) => setExpFormData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="详细描述您在此阶段主导的项目、核心产出与设计成就..."
+                    className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-400 resize-none leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex justify-end items-center gap-3 pt-3 border-t border-white/10">
+                  <button 
+                    type="button"
+                    onClick={() => setIsExpModalOpen(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    取消
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-black px-5 py-2.5 rounded-xl text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" /> 保存中...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} /> 保存并同步到网站
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Experience Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmExp && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0D0D0D] border border-white/10 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 text-red-400">
+                <Trash2 size={20} />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">确认删除此履历？</h3>
+              </div>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                履历条目 “<span className="text-white font-medium">{deleteConfirmExp.role} @ {deleteConfirmExp.company}</span>” 将从网站和数据库中移除。
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <button 
+                  onClick={() => setDeleteConfirmExp(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={async () => {
+                    const item = deleteConfirmExp;
+                    setDeleteConfirmExp(null);
+                    if (item) {
+                      try {
+                        await deleteDoc(doc(db, 'experiences', item.id));
+                        showToast('履历条目已成功删除！');
+                      } catch (error) {
+                        handleFirestoreError(error, OperationType.DELETE, `experiences/${item.id}`);
                       }
                     }
                   }}

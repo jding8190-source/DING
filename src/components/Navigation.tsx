@@ -11,6 +11,7 @@ export default function Navigation() {
   const navLinks = [
     { name: '作品', href: '#work' },
     { name: '关于', href: '#about' },
+    { name: '履历', href: '#experience' },
     { name: '联系', href: '#contact' },
   ];
 
