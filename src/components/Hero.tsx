@@ -2,7 +2,8 @@ import { useState, useEffect, ChangeEvent, DragEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowDownRight, Upload, RotateCcw } from 'lucide-react';
 
-const DEFAULT_HERO_BG = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=100&w=2400';
+const DEFAULT_HERO_BG = './hero_bg.png';
+const FALLBACK_DARK_BG = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=100&w=2400';
 
 export default function Hero() {
   const [imgSrc, setImgSrc] = useState<string>(DEFAULT_HERO_BG);
@@ -19,8 +20,11 @@ export default function Hero() {
   }, []);
 
   const handleImageError = () => {
-    if (imgSrc !== DEFAULT_HERO_BG) {
-      setImgSrc(DEFAULT_HERO_BG);
+    if (imgSrc === DEFAULT_HERO_BG) {
+      // Fallback to high-res dark fluid art if relative local asset path fails
+      setImgSrc(FALLBACK_DARK_BG);
+    } else if (imgSrc !== FALLBACK_DARK_BG) {
+      setImgSrc(FALLBACK_DARK_BG);
     }
   };
 
@@ -85,13 +89,18 @@ export default function Hero() {
       {/* Background Image: cinematic, full-bleed, full screen container */}
       <div className="absolute inset-0 z-0 select-none overflow-hidden pointer-events-none">
         {imgSrc ? (
-          <img 
-            src={imgSrc}
-            onError={handleImageError}
-            className="w-full h-full object-cover transition-transform duration-[3000ms] ease-out scale-[1.01]"
-            alt="Dark Cinematic Workspace Base"
-            referrerPolicy="no-referrer"
-          />
+          <>
+            <img 
+              src={imgSrc}
+              onError={handleImageError}
+              className="w-full h-full object-cover transition-transform duration-[3000ms] ease-out scale-[1.01] opacity-75"
+              alt="Dark Cinematic Workspace Base"
+              referrerPolicy="no-referrer"
+            />
+            {/* Ambient vignette and dark contrast overlays to maintain luxury dark aesthetic */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-[#050505]/40 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/60 via-transparent to-[#050505]/60 pointer-events-none" />
+          </>
         ) : null}
       </div>
 
