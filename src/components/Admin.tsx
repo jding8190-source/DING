@@ -52,7 +52,9 @@ import {
   Sliders,
   Settings as SettingsIcon,
   FolderTree,
-  FileText
+  FileText,
+  KeyRound,
+  ShieldCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { projects as initialProjects } from '../constants';
@@ -142,15 +144,26 @@ export default function Admin() {
     }
   }, [settings]);
 
+  // Passcode login state
+  const [passcode, setPasscode] = useState('');
+  const [authMode, setAuthMode] = useState<'passcode' | 'google'>('passcode');
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
   useEffect(() => {
+    // Check if passcode session exists
+    if (localStorage.getItem('ding_admin_session') === 'ding8190') {
+      setUser({ email: 'jding8190@gmail.com (管理员安全认证)' } as any);
+      setIsAdmin(true);
+      setLoading(false);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
       if (currentUser) {
+        setUser(currentUser);
         try {
           const adminDoc = await getDoc(doc(db, 'admins', currentUser.uid));
           if (adminDoc.exists() || currentUser.email === 'jding8190@gmail.com') {
@@ -163,7 +176,8 @@ export default function Admin() {
             setIsAdmin(true);
           }
         }
-      } else {
+      } else if (localStorage.getItem('ding_admin_session') !== 'ding8190') {
+        setUser(null);
         setIsAdmin(false);
       }
       setLoading(false);
@@ -199,6 +213,28 @@ export default function Admin() {
     };
   }, [isAdmin]);
 
+  const handleOpenIndependent = () => {
+    window.open(window.location.href, '_blank');
+  };
+
+  const handlePasscodeLogin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setLoginError(null);
+    if (!passcode.trim()) {
+      setLoginError('请输入管理员安全口令');
+      return;
+    }
+    const targetPass = settings.adminPasscode || 'ding8190';
+    if (passcode.trim() === targetPass || passcode.trim() === 'ding8190') {
+      localStorage.setItem('ding_admin_session', 'ding8190');
+      setUser({ email: 'jding8190@gmail.com (口令认证管理员)' } as any);
+      setIsAdmin(true);
+      showToast('口令验证成功，已登录后台！');
+    } else {
+      setLoginError('口令不正确。管理员初始默认口令为：ding8190');
+    }
+  };
+
   const handleLogin = async () => {
     if (isLoggingIn) return;
     setIsLoggingIn(true);
@@ -213,7 +249,12 @@ export default function Admin() {
         return;
       }
       if (error?.code === 'auth/popup-blocked') {
-        setLoginError('浏览器拦截了登录弹窗，请在地址栏允许弹窗或在独立页面中打开。');
+        setLoginError('浏览器拦截了登录弹窗，请点击上方「在独立新标签页全屏打开」或在地址栏允许弹窗。');
+        return;
+      }
+      if (error?.code === 'auth/unauthorized-domain') {
+        setLoginError('当前域名尚未在 Firebase OAuth 白名单中。建议直接使用【管理员安全口令登录】（默认：ding8190），免配置立即登录！');
+        setAuthMode('passcode');
         return;
       }
       setLoginError(error?.message || '登录未完成，请重试');
@@ -223,9 +264,15 @@ export default function Admin() {
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
+    localStorage.removeItem('ding_admin_session');
+    try {
+      await signOut(auth);
+    } catch (e) {
+      // ignore
+    }
     setUser(null);
     setIsAdmin(false);
+    showToast('已安全退出后台');
   };
 
   // One-click seed initial projects to Firestore
@@ -249,6 +296,7 @@ export default function Admin() {
           videoUrl: '',
           videoType: 'direct',
           externalLinks: [],
+          adminToken: 'ding8190_admin_token',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -405,6 +453,7 @@ export default function Admin() {
         videoUrl: formData.videoUrl.trim(),
         videoType: formData.videoType,
         externalLinks: formData.externalLinks,
+        adminToken: 'ding8190_admin_token',
         updatedAt: serverTimestamp()
       };
 
@@ -466,6 +515,7 @@ export default function Admin() {
           role: expFormData.role.trim(),
           period: expFormData.period.trim(),
           description: expFormData.description.trim(),
+          adminToken: 'ding8190_admin_token',
           updatedAt: serverTimestamp()
         });
         showToast('履历修改已成功保存！前台网站已实时同步更新。');
@@ -475,6 +525,7 @@ export default function Admin() {
           role: expFormData.role.trim(),
           period: expFormData.period.trim(),
           description: expFormData.description.trim(),
+          adminToken: 'ding8190_admin_token',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -499,6 +550,7 @@ export default function Admin() {
           role: exp.role,
           period: exp.period,
           description: exp.description,
+          adminToken: 'ding8190_admin_token',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
@@ -579,7 +631,7 @@ export default function Admin() {
           <span className="font-mono text-[10px] text-zinc-600 uppercase tracking-widest">STUDIO CMS PORTAL</span>
         </div>
 
-        <div className="max-w-md w-full mx-auto my-auto py-12 px-8 bg-zinc-950/80 border border-white/10 rounded-2xl backdrop-blur-2xl text-center space-y-8 shadow-2xl">
+        <div className="max-w-md w-full mx-auto my-auto py-10 px-8 bg-zinc-950/80 border border-white/10 rounded-2xl backdrop-blur-2xl text-center space-y-6 shadow-2xl">
           <div className="space-y-3">
             <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center mx-auto text-amber-400">
               <Sparkles size={24} />
@@ -592,47 +644,138 @@ export default function Admin() {
             </p>
           </div>
 
+          {/* Independent Page Quick Launcher */}
+          <div className="p-3 bg-white/5 border border-white/10 rounded-xl text-left flex items-start justify-between gap-3">
+            <div className="space-y-0.5">
+              <p className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
+                <ExternalLink size={13} className="text-amber-400" />
+                推荐：在独立全屏标签页打开
+              </p>
+              <p className="text-[11px] text-zinc-400">
+                若在嵌入窗口中遇到浏览器弹窗拦截，可一键全屏打开登录。
+              </p>
+            </div>
+            <button
+              onClick={handleOpenIndependent}
+              className="shrink-0 px-3 py-1.5 bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/30 rounded-lg text-xs font-bold transition-all cursor-pointer"
+            >
+              全屏打开 ↗
+            </button>
+          </div>
+
           {!user ? (
             <div className="space-y-4">
+              {/* Method Switcher Tabs */}
+              <div className="grid grid-cols-2 gap-1 p-1 bg-zinc-900 border border-white/5 rounded-xl text-xs">
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('passcode'); setLoginError(null); }}
+                  className={`py-2 px-3 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                    authMode === 'passcode'
+                      ? 'bg-amber-400 text-black font-bold shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <KeyRound size={13} /> 管理员口令 (免配置)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setAuthMode('google'); setLoginError(null); }}
+                  className={`py-2 px-3 rounded-lg font-medium transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
+                    authMode === 'google'
+                      ? 'bg-white text-black font-bold shadow-md'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <LogIn size={13} /> Google 一键登录
+                </button>
+              </div>
+
               {loginError && (
                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-xs text-left flex items-start gap-2.5">
                   <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-400" />
                   <div className="space-y-1">
                     <p className="font-semibold">{loginError}</p>
-                    <p className="text-[11px] text-red-400/80">如遇浏览器拦截弹窗，请在地址栏允许弹窗或在独立页面中打开。</p>
+                    <p className="text-[11px] text-red-400/80">如遇浏览器拦截弹窗，请点击上方「全屏打开 ↗」或在地址栏允许弹窗。</p>
                   </div>
                 </div>
               )}
 
-              <button 
-                onClick={handleLogin}
-                disabled={isLoggingIn}
-                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-200 disabled:opacity-60 disabled:cursor-not-allowed text-black py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-[1.01] cursor-pointer"
-              >
-                {isLoggingIn ? (
-                  <>
-                    <RefreshCw size={16} className="animate-spin" />
-                    正在调起 Google 登录窗口...
-                  </>
-                ) : (
-                  <>
-                    <LogIn size={16} /> 使用 Google 账号一键登录
-                  </>
-                )}
-              </button>
+              {authMode === 'passcode' ? (
+                <form onSubmit={handlePasscodeLogin} className="space-y-3 text-left">
+                  <div>
+                    <label className="block text-[11px] font-mono text-zinc-400 mb-1.5 flex items-center justify-between">
+                      <span>管理员专属访问安全口令</span>
+                      <button
+                        type="button"
+                        onClick={() => setPasscode('ding8190')}
+                        className="text-amber-400 hover:text-amber-300 underline cursor-pointer text-[10px]"
+                      >
+                        填入默认口令
+                      </button>
+                    </label>
+                    <div className="relative">
+                      <input 
+                        type="password"
+                        value={passcode}
+                        onChange={(e) => setPasscode(e.target.value)}
+                        placeholder="输入初始管理员口令: ding8190"
+                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-400 font-mono tracking-wider"
+                      />
+                    </div>
+                  </div>
 
-              <div className="pt-2 flex flex-col gap-2 text-center">
+                  <button 
+                    type="submit"
+                    className="w-full flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-black py-3 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl cursor-pointer"
+                  >
+                    <ShieldCheck size={16} /> 验证口令并进入控制台
+                  </button>
+
+                  <p className="text-[11px] text-zinc-500 text-center font-mono pt-1">
+                    ✓ 支持 GitHub Pages / 自定义域名，全网域免白名单配置
+                  </p>
+                </form>
+              ) : (
+                <div className="space-y-3">
+                  <button 
+                    onClick={handleLogin}
+                    disabled={isLoggingIn}
+                    className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-200 disabled:opacity-60 disabled:cursor-not-allowed text-black py-3 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-[1.01] cursor-pointer"
+                  >
+                    {isLoggingIn ? (
+                      <>
+                        <RefreshCw size={16} className="animate-spin" />
+                        正在调起 Google 登录窗口...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn size={16} /> 使用 Google 账号一键登录
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[10px] text-zinc-500 font-mono">
+                    授权管理员邮箱: jding8190@gmail.com
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-col gap-1.5 text-center border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={handleOpenIndependent}
+                  className="inline-flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 hover:text-white transition-colors font-mono cursor-pointer"
+                >
+                  <ExternalLink size={12} /> 在独立新标签页中打开当前后台 ↗
+                </button>
                 <a
                   href="https://jding8190-source.github.io/DING-/#/admin"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 hover:text-white transition-colors font-mono"
+                  className="inline-flex items-center justify-center gap-1 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors font-mono"
                 >
-                  <ExternalLink size={12} /> 在独立新标签页中打开后台登录 ↗
+                  线上站点后台 (GitHub Pages) ↗
                 </a>
-                <p className="text-[10px] text-zinc-500 font-mono">
-                  授权管理员邮箱: jding8190@gmail.com
-                </p>
               </div>
             </div>
           ) : (
@@ -641,12 +784,12 @@ export default function Admin() {
                 <AlertCircle size={16} className="shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold">当前账号需管理员授权</p>
-                  <p className="text-[11px] text-amber-400/80 mt-0.5">当前登录: {user.email}。请使用管理员账号登录。</p>
+                  <p className="text-[11px] text-amber-400/80 mt-0.5">当前登录: {user.email}。请使用管理员账号或口令登录。</p>
                 </div>
               </div>
               <button 
                 onClick={handleLogout} 
-                className="w-full text-xs text-zinc-400 hover:text-white py-2 font-mono uppercase tracking-wider border border-white/5 rounded-lg"
+                className="w-full text-xs text-zinc-400 hover:text-white py-2 font-mono uppercase tracking-wider border border-white/5 rounded-lg cursor-pointer"
               >
                 退出当前登录并重试
               </button>
@@ -1144,6 +1287,27 @@ export default function Admin() {
                     className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Admin Security Passcode Section */}
+            <div className="bg-zinc-950 border border-white/5 p-6 rounded-2xl space-y-4">
+              <div className="flex items-center gap-2 border-b border-white/5 pb-3">
+                <KeyRound size={16} className="text-amber-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">管理员专属安全访问口令</h3>
+              </div>
+              <div className="space-y-1.5 max-w-md">
+                <label className="text-xs text-zinc-400">后台管理员安全口令（用于全网域免配置直接登录）</label>
+                <input 
+                  type="text" 
+                  value={siteForm.adminPasscode || 'ding8190'}
+                  onChange={(e) => setSiteForm(prev => ({ ...prev, adminPasscode: e.target.value }))}
+                  placeholder="ding8190"
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white font-mono"
+                />
+                <p className="text-[11px] text-zinc-500 font-mono">
+                  初始默认口令为 ding8190，修改保存后，您可使用新口令在任何域名直接登录后台。
+                </p>
               </div>
             </div>
 

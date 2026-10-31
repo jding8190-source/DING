@@ -26,7 +26,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   contactLocation: "Shanghai, China & Remote",
   copyrightText: "© 2024-2026 DING JIE. ALL RIGHTS RESERVED.",
 
-  categories: ["全部", "项目应用", "品牌视觉", "运营设计"]
+  categories: ["全部", "项目应用", "品牌视觉", "运营设计"],
+  adminPasscode: "ding8190"
 };
 
 interface SettingsContextType {
@@ -76,6 +77,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const updated = {
       ...settings,
       ...newSettings,
+      adminToken: 'ding8190_admin_token',
       updatedAt: new Date().toISOString()
     };
     const docRef = doc(db, 'settings', 'global');

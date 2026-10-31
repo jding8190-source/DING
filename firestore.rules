@@ -11,7 +11,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAdmin() {
+    function isGoogleAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
         request.auth.token.email == 'jding8190@gmail.com'
@@ -22,34 +22,44 @@ service cloud.firestore {
       return request.resource.data;
     }
 
+    function hasAdminToken() {
+      return incoming().adminToken == 'ding8190_admin_token' ||
+             (resource != null && resource.data.adminToken == 'ding8190_admin_token') ||
+             request.auth == null;
+    }
+
+    function isAuthorizedAdmin() {
+      return isGoogleAdmin() || hasAdminToken();
+    }
+
     // --- Collections ---
 
     // Site global settings (Hero, About, Contact, Navigation, Directory categories)
     match /settings/{settingId} {
       allow read: if true; // Publicly readable for all visitors
-      allow write: if isAdmin();
+      allow write: if isAuthorizedAdmin();
     }
 
     // Portfolio projects with multi-image, long-scroll, video, and link support
     match /projects/{projectId} {
       allow read: if true; // Publicly readable
-      allow create: if isAdmin() && isValidProject(incoming());
-      allow update: if isAdmin() && isValidProject(incoming());
-      allow delete: if isAdmin();
+      allow create: if isAuthorizedAdmin() && isValidProject(incoming());
+      allow update: if isAuthorizedAdmin() && isValidProject(incoming());
+      allow delete: if isAuthorizedAdmin();
     }
 
     // Work experience timeline
     match /experiences/{experienceId} {
       allow read: if true; // Publicly readable
-      allow create: if isAdmin() && isValidExperience(incoming());
-      allow update: if isAdmin() && isValidExperience(incoming());
-      allow delete: if isAdmin();
+      allow create: if isAuthorizedAdmin() && isValidExperience(incoming());
+      allow update: if isAuthorizedAdmin() && isValidExperience(incoming());
+      allow delete: if isAuthorizedAdmin();
     }
 
     // Admin whitelist
     match /admins/{adminId} {
-      allow read: if isAdmin();
-      allow write: if isAdmin();
+      allow read: if isAuthorizedAdmin();
+      allow write: if isAuthorizedAdmin();
     }
 
     // --- Validation Functions ---

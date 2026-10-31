@@ -61,4 +61,7 @@ export interface SiteSettings {
 
   // Menu Directory Categories
   categories: string[];
+
+  // Admin access
+  adminPasscode?: string;
 }
