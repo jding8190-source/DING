@@ -87,9 +87,12 @@ export default function Admin() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<ProjectFormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadProgress, setUploadProgress] = useState(false);
+  const [deleteConfirmItem, setDeleteConfirmItem] = useState<{ id: string; title: string } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,11 +164,29 @@ export default function Admin() {
   }, [isAdmin]);
 
   const handleLogin = async () => {
+    if (isLoggingIn) return; // Prevent concurrent popup requests
+    setIsLoggingIn(true);
+    setLoginError(null);
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error: any) {
-      console.error('Login failed:', error);
-      alert(`登录失败: ${error?.message || '请重试'}`);
+      // Benign user actions: user closed popup or clicked again
+      if (
+        error?.code === 'auth/cancelled-popup-request' ||
+        error?.code === 'auth/popup-closed-by-user'
+      ) {
+        return;
+      }
+
+      if (error?.code === 'auth/popup-blocked') {
+        setLoginError('浏览器拦截了登录弹出窗口，请在浏览器地址栏允许弹出窗口，或点击下方在新标签页中打开。');
+        return;
+      }
+
+      console.warn('Login attempt:', error?.code || error?.message);
+      setLoginError(error?.message || '登录未完成，请重试');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -177,7 +198,6 @@ export default function Admin() {
 
   // One-click seed initial projects to Firestore
   const seedDatabase = async () => {
-    if (!window.confirm('一键将目前前台内置的 6 个精选作品同步导入到云端数据库？导入后可随时直接在线修改文字与图片。')) return;
     setSaving(true);
     try {
       let count = 0;
@@ -229,15 +249,9 @@ export default function Admin() {
     setIsModalOpen(true);
   };
 
-  // Delete project
-  const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`确定要从网站删除作品 "${title}" 吗？此操作无法撤销。`)) return;
-    try {
-      await deleteDoc(doc(db, 'projects', id));
-      showToast('作品已成功删除，前台已即时更新！');
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `projects/${id}`);
-    }
+  // Delete project confirmation trigger
+  const confirmDeleteProject = (id: string, title: string) => {
+    setDeleteConfirmItem({ id, title });
   };
 
   // Handle local image upload with browser compression to keep size optimal
@@ -374,15 +388,46 @@ export default function Admin() {
 
           {!user ? (
             <div className="space-y-4">
+              {loginError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-xs text-left flex items-start gap-2.5">
+                  <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-400" />
+                  <div className="space-y-1">
+                    <p className="font-semibold">{loginError}</p>
+                    <p className="text-[11px] text-red-400/80">如浏览器拦截了登录弹窗，请在地址栏允许弹窗或在独立全屏页面中打开。</p>
+                  </div>
+                </div>
+              )}
+
               <button 
                 onClick={handleLogin}
-                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-200 text-black py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-[1.02] cursor-pointer"
+                disabled={isLoggingIn}
+                className="w-full flex items-center justify-center gap-3 bg-white hover:bg-zinc-200 disabled:opacity-60 disabled:cursor-not-allowed text-black py-3.5 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl hover:scale-[1.01] cursor-pointer"
               >
-                <LogIn size={16} /> 使用 Google 账号一键登录
+                {isLoggingIn ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    正在调起 Google 登录窗口...
+                  </>
+                ) : (
+                  <>
+                    <LogIn size={16} /> 使用 Google 账号一键登录
+                  </>
+                )}
               </button>
-              <p className="text-[10px] text-zinc-500 font-mono">
-                授权管理员邮箱: jding8190@gmail.com
-              </p>
+
+              <div className="pt-2 flex flex-col gap-2 text-center">
+                <a
+                  href="https://jding8190-source.github.io/DING-/#/admin"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 text-[11px] text-zinc-400 hover:text-white transition-colors font-mono"
+                >
+                  <ExternalLink size={12} /> 在独立新标签页中打开后台登录 ↗
+                </a>
+                <p className="text-[10px] text-zinc-500 font-mono">
+                  授权管理员邮箱: jding8190@gmail.com
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -614,7 +659,7 @@ export default function Admin() {
                           <Edit3 size={13} /> 编辑
                         </button>
                         <button 
-                          onClick={() => handleDelete(p.id, p.title)}
+                          onClick={() => confirmDeleteProject(p.id, p.title)}
                           className="flex items-center gap-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1.5 rounded-lg transition-colors cursor-pointer"
                           title="删除作品"
                         >
@@ -901,6 +946,53 @@ export default function Admin() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0D0D0D] border border-white/10 rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 text-red-400">
+                <Trash2 size={20} />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">确认删除此作品？</h3>
+              </div>
+              <p className="text-xs text-zinc-400 leading-relaxed">
+                作品 “<span className="text-white font-medium">{deleteConfirmItem.title}</span>” 将从网站和数据库中移除。
+              </p>
+              <div className="flex justify-end gap-3 pt-2">
+                <button 
+                  onClick={() => setDeleteConfirmItem(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={async () => {
+                    const item = deleteConfirmItem;
+                    setDeleteConfirmItem(null);
+                    if (item) {
+                      try {
+                        await deleteDoc(doc(db, 'projects', item.id));
+                        showToast('作品已成功删除！');
+                      } catch (error) {
+                        handleFirestoreError(error, OperationType.DELETE, `projects/${item.id}`);
+                      }
+                    }
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  确认删除
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
