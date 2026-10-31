@@ -387,6 +387,8 @@ export default function ProjectGrid() {
                         {project.imageUrl ? (
                           <img 
                             src={project.imageUrl} 
+                            loading="lazy"
+                            decoding="async"
                             className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
                             alt={project.title}
                             referrerPolicy="no-referrer"

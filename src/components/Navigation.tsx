@@ -1,12 +1,24 @@
 import { motion } from 'motion/react';
 import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSiteSettings } from '../lib/settings';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { settings } = useSiteSettings();
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Only display admin badge if the user is already authenticated as admin
+    const checkAdmin = () => {
+      const isAuth = localStorage.getItem('ding_admin_session') === 'ding8190';
+      setIsAdminLoggedIn(isAuth);
+    };
+    checkAdmin();
+    window.addEventListener('storage', checkAdmin);
+    return () => window.removeEventListener('storage', checkAdmin);
+  }, []);
 
   const navLinks = [
     { name: '作品', href: '#work' },
@@ -54,13 +66,18 @@ export default function Navigation() {
               {link.name}
             </motion.a>
           ))}
-          <Link
-            to="/admin"
-            className="text-[11px] font-mono text-zinc-400 hover:text-amber-400 border border-white/10 hover:border-amber-500/40 px-2.5 py-1 rounded-md transition-colors bg-white/[0.02]"
-            title="作品与全站内容管理后台"
-          >
-            CMS 后台
-          </Link>
+
+          {/* Only visible to the authenticated admin - strictly invisible to public visitors */}
+          {isAdminLoggedIn && (
+            <Link
+              to="/admin"
+              className="text-[11px] font-mono text-amber-400 border border-amber-500/30 hover:bg-amber-500/10 px-2.5 py-1 rounded-md transition-colors"
+              title="管理员专属控制台"
+            >
+              控制台
+            </Link>
+          )}
+
           <div className="w-px h-4 bg-zinc-800 mx-2"></div>
           <span className="text-[11px] font-semibold text-zinc-500 tracking-wider">INDEX ©24</span>
         </div>
@@ -91,13 +108,15 @@ export default function Navigation() {
                 {link.name}
               </a>
             ))}
-            <Link
-              to="/admin"
-              onClick={() => setIsOpen(false)}
-              className="font-mono text-sm tracking-widest uppercase text-amber-400 py-2"
-            >
-              CMS 后台管理
-            </Link>
+            {isAdminLoggedIn && (
+              <Link
+                to="/admin"
+                onClick={() => setIsOpen(false)}
+                className="font-mono text-sm tracking-widest uppercase text-amber-400 py-2"
+              >
+                管理控制台
+              </Link>
+            )}
           </div>
         </motion.div>
       )}

@@ -144,9 +144,18 @@ export default function Admin() {
     }
   }, [settings]);
 
-  // Passcode login state
+  // Passcode login & strict security state
   const [passcode, setPasscode] = useState('');
   const [authMode, setAuthMode] = useState<'passcode' | 'google'>('passcode');
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    return parseInt(localStorage.getItem('admin_failed_attempts') || '0', 10);
+  });
+  const [lockoutUntil, setLockoutUntil] = useState(() => {
+    return parseInt(localStorage.getItem('admin_lockout_until') || '0', 10);
+  });
+
+  const isLockedOut = lockoutUntil > Date.now();
+  const remainingLockMinutes = Math.max(1, Math.ceil((lockoutUntil - Date.now()) / 60000));
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -156,25 +165,23 @@ export default function Admin() {
   useEffect(() => {
     // Check if passcode session exists
     if (localStorage.getItem('ding_admin_session') === 'ding8190') {
-      setUser({ email: 'jding8190@gmail.com (管理员安全认证)' } as any);
+      setUser({ email: 'jding8190@gmail.com (博主管理员已认证)' } as any);
       setIsAdmin(true);
       setLoading(false);
     }
 
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        setUser(currentUser);
-        try {
-          const adminDoc = await getDoc(doc(db, 'admins', currentUser.uid));
-          if (adminDoc.exists() || currentUser.email === 'jding8190@gmail.com') {
-            setIsAdmin(true);
-          } else {
-            setIsAdmin(true);
-          }
-        } catch (err) {
-          if (currentUser.email === 'jding8190@gmail.com') {
-            setIsAdmin(true);
-          }
+        // STRICT ACCESS CONTROL: Only jding8190@gmail.com has access
+        if (currentUser.email === 'jding8190@gmail.com') {
+          setUser(currentUser);
+          setIsAdmin(true);
+        } else {
+          // Immediately deny and sign out any non-authorized visitor
+          await signOut(auth);
+          setUser(null);
+          setIsAdmin(false);
+          setLoginError(`⛔ 访问拒绝：账号 (${currentUser.email}) 无权访问。后台严格仅限博主本人 (jding8190@gmail.com) 访问。`);
         }
       } else if (localStorage.getItem('ding_admin_session') !== 'ding8190') {
         setUser(null);
@@ -220,18 +227,41 @@ export default function Admin() {
   const handlePasscodeLogin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setLoginError(null);
-    if (!passcode.trim()) {
-      setLoginError('请输入管理员安全口令');
+
+    // Check brute-force lockout
+    if (Date.now() < lockoutUntil) {
+      setLoginError(`⛔ 连续错误次数过多，访问已锁定。请等待 ${remainingLockMinutes} 分钟后再试。`);
       return;
     }
+
+    if (!passcode.trim()) {
+      setLoginError('请输入博主管理员安全口令');
+      return;
+    }
+
     const targetPass = settings.adminPasscode || 'ding8190';
     if (passcode.trim() === targetPass || passcode.trim() === 'ding8190') {
       localStorage.setItem('ding_admin_session', 'ding8190');
-      setUser({ email: 'jding8190@gmail.com (口令认证管理员)' } as any);
+      localStorage.removeItem('admin_failed_attempts');
+      localStorage.removeItem('admin_lockout_until');
+      setFailedAttempts(0);
+      setLockoutUntil(0);
+      setUser({ email: 'jding8190@gmail.com (博主管理员已认证)' } as any);
       setIsAdmin(true);
-      showToast('口令验证成功，已登录后台！');
+      showToast('身份验证通过，欢迎进入后台管理！');
     } else {
-      setLoginError('口令不正确。管理员初始默认口令为：ding8190');
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+      localStorage.setItem('admin_failed_attempts', String(nextAttempts));
+
+      if (nextAttempts >= 5) {
+        const lockTime = Date.now() + 15 * 60 * 1000; // Lock for 15 minutes
+        setLockoutUntil(lockTime);
+        localStorage.setItem('admin_lockout_until', String(lockTime));
+        setLoginError('⛔ 连续错误超过5次，为确保后台安全，已自动锁定访问15分钟。');
+      } else {
+        setLoginError(`口令错误，您还有 ${5 - nextAttempts} 次尝试机会。`);
+      }
     }
   };
 
@@ -705,35 +735,35 @@ export default function Admin() {
                 <form onSubmit={handlePasscodeLogin} className="space-y-3 text-left">
                   <div>
                     <label className="block text-[11px] font-mono text-zinc-400 mb-1.5 flex items-center justify-between">
-                      <span>管理员专属访问安全口令</span>
-                      <button
-                        type="button"
-                        onClick={() => setPasscode('ding8190')}
-                        className="text-amber-400 hover:text-amber-300 underline cursor-pointer text-[10px]"
-                      >
-                        填入默认口令
-                      </button>
+                      <span>博主专用私密安全口令</span>
+                      {failedAttempts > 0 && !isLockedOut && (
+                        <span className="text-amber-400/90 text-[10px]">
+                          剩余重试机会: {5 - failedAttempts} 次
+                        </span>
+                      )}
                     </label>
                     <div className="relative">
                       <input 
                         type="password"
+                        disabled={isLockedOut}
                         value={passcode}
                         onChange={(e) => setPasscode(e.target.value)}
-                        placeholder="输入初始管理员口令: ding8190"
-                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-400 font-mono tracking-wider"
+                        placeholder={isLockedOut ? `已锁定，请在 ${remainingLockMinutes} 分钟后再试` : "请输入管理员专属安全口令"}
+                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-400 font-mono tracking-wider disabled:opacity-50"
                       />
                     </div>
                   </div>
 
                   <button 
                     type="submit"
-                    className="w-full flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 text-black py-3 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl cursor-pointer"
+                    disabled={isLockedOut}
+                    className="w-full flex items-center justify-center gap-2 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed text-black py-3 px-6 rounded-xl font-bold text-xs uppercase tracking-wider transition-all duration-300 shadow-xl cursor-pointer"
                   >
                     <ShieldCheck size={16} /> 验证口令并进入控制台
                   </button>
 
-                  <p className="text-[11px] text-zinc-500 text-center font-mono pt-1">
-                    ✓ 支持 GitHub Pages / 自定义域名，全网域免白名单配置
+                  <p className="text-[10px] text-zinc-500 text-center font-mono pt-1">
+                    🔒 防暴力破解保护已开启 · 连续错误5次将锁定15分钟
                   </p>
                 </form>
               ) : (
@@ -755,7 +785,7 @@ export default function Admin() {
                     )}
                   </button>
                   <p className="text-[10px] text-zinc-500 font-mono">
-                    授权管理员邮箱: jding8190@gmail.com
+                    严格仅限博主授权邮箱: jding8190@gmail.com
                   </p>
                 </div>
               )}

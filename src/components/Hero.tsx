@@ -3,20 +3,22 @@ import { motion } from 'motion/react';
 import { ArrowDownRight } from 'lucide-react';
 import { useSiteSettings } from '../lib/settings';
 
-const DEFAULT_HERO_BG = './hero_bg.png';
+const DEFAULT_HERO_BG = './hero_bg.webp';
 
 export default function Hero() {
   const { settings } = useSiteSettings();
-  const [imgSrc, setImgSrc] = useState<string>(settings.heroBgUrl || DEFAULT_HERO_BG);
+  const [imgSrc, setImgSrc] = useState<string>(
+    settings.heroBgUrl === './hero_bg.png' ? DEFAULT_HERO_BG : (settings.heroBgUrl || DEFAULT_HERO_BG)
+  );
 
   useEffect(() => {
     if (settings.heroBgUrl) {
-      setImgSrc(settings.heroBgUrl);
+      setImgSrc(settings.heroBgUrl === './hero_bg.png' ? DEFAULT_HERO_BG : settings.heroBgUrl);
     }
   }, [settings.heroBgUrl]);
 
   const handleImageError = () => {
-    setImgSrc(DEFAULT_HERO_BG);
+    setImgSrc('./hero_bg.png');
   };
 
   return (
@@ -32,6 +34,8 @@ export default function Hero() {
             <img 
               src={imgSrc}
               onError={handleImageError}
+              fetchPriority="high"
+              decoding="async"
               className="w-full h-full object-cover object-[center_35%] lg:object-center transition-transform duration-[3000ms] ease-out scale-[1.01] opacity-90"
               alt="Dark Cinematic Workspace Base"
               referrerPolicy="no-referrer"
