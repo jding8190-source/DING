@@ -1,0 +1,58 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "Portfolio project entry",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the project" },
+        "description": { "type": "string", "description": "Brief description" },
+        "imageUrl": { "type": "string", "description": "Thumbnail image URL" },
+        "category": { "type": "string", "description": "Project category" },
+        "year": { "type": "string", "description": "Year of completion" },
+        "details": { "type": "string", "description": "Detailed case study text" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "imageUrl", "category", "year"]
+    },
+    "Experience": {
+      "title": "Experience",
+      "description": "Work history entry",
+      "type": "object",
+      "properties": {
+        "company": { "type": "string" },
+        "role": { "type": "string" },
+        "period": { "type": "string" },
+        "description": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["company", "role", "period", "description"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized user for CMS",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "uid": { "type": "string" }
+      },
+      "required": ["email", "uid"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Portfolio projects collection"
+    },
+    "/experiences/{experienceId}": {
+      "schema": "Experience",
+      "description": "Work history collection"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "List of authorized administrators"
+    }
+  }
+}
