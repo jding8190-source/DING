@@ -2,19 +2,54 @@
   "entities": {
     "Project": {
       "title": "Project",
-      "description": "Portfolio project entry",
+      "description": "Flexible portfolio project entry supporting multiple images, long scrolls, video windows, and external links",
       "type": "object",
       "properties": {
         "title": { "type": "string", "description": "Title of the project" },
-        "description": { "type": "string", "description": "Brief description" },
-        "imageUrl": { "type": "string", "description": "Thumbnail image URL" },
-        "category": { "type": "string", "description": "Project category" },
+        "description": { "type": "string", "description": "Brief description for grid card" },
+        "imageUrl": { "type": "string", "description": "Cover thumbnail image URL or base64" },
+        "category": { "type": "string", "description": "Category selected from directory menu" },
         "year": { "type": "string", "description": "Year of completion" },
-        "details": { "type": "string", "description": "Detailed case study text" },
+        "client": { "type": "string", "description": "Client or company name" },
+        "role": { "type": "string", "description": "Designer role or position" },
+        "overview": { "type": "string", "description": "Detailed case study description" },
+        "images": { "type": "array", "description": "Multiple project images (jpg, gif, png, webp)" },
+        "longImages": { "type": "array", "description": "Long vertical scroll case study images" },
+        "videoUrl": { "type": "string", "description": "Direct video file URL or iframe embed URL" },
+        "videoType": { "type": "string", "description": "Video format: mp4, webm, youtube, bilibili, embed" },
+        "embedUrl": { "type": "string", "description": "Interactive prototype embed URL (e.g. Figma)" },
+        "externalLinks": { "type": "array", "description": "Custom external links" },
         "createdAt": { "type": "string", "format": "date-time" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "description", "imageUrl", "category", "year"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Complete global site configuration for all modules and directory menu",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string" },
+        "siteTitle": { "type": "string" },
+        "logoText": { "type": "string" },
+        "designerRole": { "type": "string" },
+        "heroHeadline": { "type": "string" },
+        "heroTagline": { "type": "string" },
+        "heroExhibitTag": { "type": "string" },
+        "heroLocation": { "type": "string" },
+        "heroCtaText": { "type": "string" },
+        "heroBgUrl": { "type": "string" },
+        "aboutBio": { "type": "string" },
+        "aboutPhilosophy": { "type": "string" },
+        "aboutSkills": { "type": "string" },
+        "availableStatus": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "contactWechat": { "type": "string" },
+        "contactLocation": { "type": "string" },
+        "copyrightText": { "type": "string" },
+        "categories": { "type": "array" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
     },
     "Experience": {
       "title": "Experience",
@@ -45,6 +80,10 @@
     "/projects/{projectId}": {
       "schema": "Project",
       "description": "Portfolio projects collection"
+    },
+    "/settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Global website module configurations"
     },
     "/experiences/{experienceId}": {
       "schema": "Experience",

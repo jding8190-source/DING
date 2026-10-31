@@ -20,9 +20,17 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { db } from '../lib/firebase';
 import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
 
-const categories = ['全部', '项目应用', '品牌视觉', '运营设计'];
+import { useSiteSettings } from '../lib/settings';
 
 export default function ProjectGrid() {
+  const { settings } = useSiteSettings();
+  const categories = useMemo(() => {
+    const list = settings.categories && settings.categories.length > 0 
+      ? settings.categories 
+      : ['全部', '项目应用', '品牌视觉', '运营设计'];
+    return list.includes('全部') ? list : ['全部', ...list];
+  }, [settings.categories]);
+
   const [activeCategory, setActiveCategory] = useState('全部');
   const [projects, setProjects] = useState<any[]>(staticProjects);
   const [loading, setLoading] = useState(true);

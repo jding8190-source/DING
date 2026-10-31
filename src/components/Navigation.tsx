@@ -2,9 +2,11 @@ import { motion } from 'motion/react';
 import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useSiteSettings } from '../lib/settings';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const { settings } = useSiteSettings();
 
   const navLinks = [
     { name: '作品', href: '#work' },
@@ -22,11 +24,17 @@ export default function Navigation() {
         >
           <Link to="/" className="flex items-center gap-4 group">
             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center transition-transform duration-1000 ease-in-out group-hover:rotate-[360deg]">
-              <span className="text-black font-bold text-[9px] tracking-tighter">ZC</span>
+              <span className="text-black font-bold text-[9px] tracking-tighter">
+                {settings.logoText || 'ZC'}
+              </span>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-[12px] font-semibold tracking-tight text-white leading-none">Ding Jie</h1>
-              <span className="text-[10px] text-zinc-500 mt-1">Creative Director</span>
+              <h1 className="text-[12px] font-semibold tracking-tight text-white leading-none">
+                {settings.siteName || 'Ding Jie'}
+              </h1>
+              <span className="text-[10px] text-zinc-500 mt-1">
+                {settings.designerRole || 'Creative Director'}
+              </span>
             </div>
           </Link>
         </motion.div>
@@ -47,8 +55,8 @@ export default function Navigation() {
           ))}
           <Link
             to="/admin"
-            className="text-[11px] font-mono text-zinc-500 hover:text-amber-400 border border-white/5 hover:border-amber-500/30 px-2.5 py-1 rounded-md transition-colors"
-            title="作品管理后台"
+            className="text-[11px] font-mono text-zinc-400 hover:text-amber-400 border border-white/10 hover:border-amber-500/40 px-2.5 py-1 rounded-md transition-colors bg-white/[0.02]"
+            title="作品与全站内容管理后台"
           >
             CMS 后台
           </Link>

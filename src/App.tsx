@@ -5,6 +5,7 @@ import ProjectDetail from './components/ProjectDetail';
 import Archive from './components/Archive';
 import Admin from './components/Admin';
 import FlowingLight from './components/FlowingLight';
+import { SettingsProvider } from './lib/settings';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -35,10 +36,12 @@ function AnimatedRoutes() {
 
 export default function App() {
   return (
-    <Router>
-      <main className="selection:bg-white selection:text-black min-h-screen bg-[#080808]">
-        <AnimatedRoutes />
-      </main>
-    </Router>
+    <SettingsProvider>
+      <Router>
+        <main className="selection:bg-white selection:text-black min-h-screen bg-[#080808]">
+          <AnimatedRoutes />
+        </main>
+      </Router>
+    </SettingsProvider>
   );
 }

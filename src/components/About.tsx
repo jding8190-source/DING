@@ -1,6 +1,13 @@
 import { motion } from 'motion/react';
+import { useSiteSettings } from '../lib/settings';
 
 export default function About() {
+  const { settings } = useSiteSettings();
+
+  const skills = settings.aboutSkills && settings.aboutSkills.length > 0
+    ? settings.aboutSkills
+    : ['Visual Systems', 'Digital Strategy', 'Interaction Design', 'Product Architecture', 'Spatial UI'];
+
   return (
     <section id="about" className="py-40 px-6 bg-[#080808] relative overflow-hidden border-t border-white/[0.03]">
       <div className="max-w-[1440px] mx-auto w-full px-6 lg:px-12">
@@ -18,8 +25,8 @@ export default function About() {
               极致之美来源于 <br />
               <span className="text-zinc-600">秩序的延伸.</span>
             </h2>
-            <p className="text-body max-w-xl">
-              设计不仅是视觉的堆砌，而是一种理性的秩序。我专注于在数字留白中探寻功能与情感的最佳平衡，让每一个像素都拥有其存在的必然性。
+            <p className="text-body max-w-xl leading-relaxed text-zinc-400">
+              {settings.aboutPhilosophy || '设计不仅是视觉的堆砌，而是一种理性的秩序。我专注于在数字留白中探寻功能与情感的最佳平衡，让每一个像素都拥有其存在的必然性。'}
             </p>
           </motion.div>
 
@@ -27,22 +34,21 @@ export default function About() {
             <div className="space-y-10">
               <span className="text-meta border-b border-white/10 pb-4 block">Expertise</span>
               <ul className="space-y-4">
-                {['Visual Systems', 'Digital Strategy', 'Interaction Design', 'Product Architecture'].map((item) => (
+                {skills.map((item) => (
                   <li key={item} className="text-label text-white">{item}</li>
                 ))}
               </ul>
             </div>
             <div className="space-y-10">
-              <span className="text-meta border-b border-white/10 pb-4 block">Experience</span>
-              <div className="space-y-6">
-                <div className="space-y-1">
-                  <h4 className="text-subheading font-semibold text-white text-[14px]">Lead Product Designer</h4>
-                  <p className="text-meta text-[10px] text-zinc-500 tracking-wider uppercase">Global Creative Studio · 2021 — 2024</p>
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-subheading font-semibold text-white text-[14px]">Senior UI/UX Designer</h4>
-                  <p className="text-meta text-[10px] text-zinc-500 tracking-wider uppercase">Innovation Lab · 2018 — 2021</p>
-                </div>
+              <span className="text-meta border-b border-white/10 pb-4 block">About Me</span>
+              <p className="text-xs text-zinc-400 leading-relaxed font-light">
+                {settings.aboutBio || '聚焦于极简、秩序感与空间深度的跨学科数字体验设计。致力于将尖端科技与高级极简视觉融汇一体。'}
+              </p>
+              <div className="pt-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
+                  {settings.availableStatus || 'Available — 2024-2026'}
+                </span>
               </div>
             </div>
           </div>

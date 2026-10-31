@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { ArrowDownRight } from 'lucide-react';
+import { useSiteSettings } from '../lib/settings';
 
 const DEFAULT_HERO_BG = './hero_bg.png';
 
 export default function Hero() {
-  const [imgSrc, setImgSrc] = useState<string>(DEFAULT_HERO_BG);
+  const { settings } = useSiteSettings();
+  const [imgSrc, setImgSrc] = useState<string>(settings.heroBgUrl || DEFAULT_HERO_BG);
 
   useEffect(() => {
-    // Clear legacy test uploads from storage to enforce clean default state
-    localStorage.removeItem('hero_custom_bg');
-    localStorage.removeItem('hero_custom_bg_v2');
-  }, []);
+    if (settings.heroBgUrl) {
+      setImgSrc(settings.heroBgUrl);
+    }
+  }, [settings.heroBgUrl]);
 
   const handleImageError = () => {
-    // Safe fallback to default
     setImgSrc(DEFAULT_HERO_BG);
   };
 
@@ -45,7 +46,7 @@ export default function Hero() {
       {/* Floating elegant content over the background */}
       <div className="max-w-[1440px] mx-auto w-full relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
         
-        {/* Left Aligned Content aligned to negative space */}
+        {/* Left Aligned Content */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -59,11 +60,11 @@ export default function Hero() {
               transition={{ delay: 0.3 }}
               className="inline-flex items-center text-zinc-400 font-medium tracking-widest text-xs uppercase"
             >
-              <span>Creative Exhibition Lab</span>
+              <span>{settings.heroTagline || 'Creative Exhibition Lab'}</span>
             </motion.div>
             
             <h1 className="text-display text-[clamp(4.5rem,12vw,12rem)] font-light tracking-[-0.06em] leading-[0.75] uppercase text-white select-none">
-              DESIGN
+              {settings.heroHeadline || 'DESIGN'}
             </h1>
           </div>
 
@@ -77,13 +78,13 @@ export default function Hero() {
               onClick={() => document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' })}
               className="group flex items-center gap-4 bg-white hover:bg-neutral-200 text-black px-10 py-4.5 rounded-full transition-all duration-300 cursor-pointer text-xs font-semibold tracking-widest uppercase shadow-2xl hover:scale-[1.02]"
             >
-              Enter Exhibition
+              {settings.heroCtaText || 'Enter Exhibition'}
               <ArrowDownRight size={14} className="group-hover:translate-x-1 group-hover:translate-y-1 transition-transform duration-300" />
             </button>
           </motion.div>
         </motion.div>
 
-        {/* Right Corner: Sleek minimalist exhibit curation status */}
+        {/* Right Corner: Sleek exhibit curation status */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -92,9 +93,11 @@ export default function Hero() {
         >
           <div className="flex items-center gap-2 text-zinc-400 text-[10px] bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>PORTFOLIO CURATION 2024-2026</span>
+            <span>{settings.heroExhibitTag || 'PORTFOLIO CURATION 2024-2026'}</span>
           </div>
-          <span className="text-zinc-500 text-[9px] tracking-widest">SHANGHAI / TOKYO / REMOTE</span>
+          <span className="text-zinc-500 text-[9px] tracking-widest">
+            {settings.heroLocation || 'SHANGHAI / TOKYO / REMOTE'}
+          </span>
         </motion.div>
 
       </div>

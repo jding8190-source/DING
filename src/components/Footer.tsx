@@ -1,4 +1,7 @@
+import { useSiteSettings } from '../lib/settings';
+
 export default function Footer() {
+  const { settings } = useSiteSettings();
   const currentYear = new Date().getFullYear();
   
   return (
@@ -6,9 +9,13 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-12">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">ZC</span>
+            <span className="text-white text-[10px] font-bold">
+              {settings.logoText || 'ZC'}
+            </span>
           </div>
-          <div className="text-sm font-display font-medium tracking-tight text-white">DESIGNER.</div>
+          <div className="text-sm font-display font-medium tracking-tight text-white">
+            {settings.siteName || 'DING JIE'}.
+          </div>
         </div>
         
         <div className="flex gap-12 text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-mono">
@@ -21,10 +28,12 @@ export default function Footer() {
         <div className="flex items-center gap-8">
            <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 italic">Available — 2024</span>
+              <span className="text-[9px] uppercase tracking-[0.2em] text-zinc-500 italic">
+                {settings.availableStatus || `Available — ${currentYear}`}
+              </span>
            </div>
            <div className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 font-mono">
-             © {currentYear}
+             {settings.copyrightText || `© ${currentYear} ${settings.siteName || 'DING JIE'}. ALL RIGHTS RESERVED.`}
            </div>
         </div>
       </div>
