@@ -151,39 +151,32 @@ git add -A && git commit -m "update portfolio" && git push
 
 ## 9. 每次迭代自动同步与发布（2026-11-10 新增）
 
-### 链路
+### 当前主链路：本机一键
 
 ```
 本地改源码
-  → push 到 jding8190-source/DING 的 main
-  → GitHub Actions（.github/workflows/deploy.yml）
-       npm ci → npm run lint → npm run build
-       把 dist/ 同步到 jding8190-source/DING- 的 main
+  → ./push-to-github.sh "改动说明"
+      ① git 提交
+      ② 按内容差异把源码同步到 jding8190-source/DING 的 main
+      ③ npm run lint && npm run build
+      ④ 把 dist/ 一次提交同步到 jding8190-source/DING- 的 main
   → GitHub Pages 自动更新 https://jding8190-source.github.io/DING-/
 ```
 
-云端构建在 GitHub 服务器上执行，用仓库内置令牌拉取源码，**不依赖本机 git 凭据常驻**；跨仓库写入使用一次性配置的 `DING_PAGES_TOKEN`。本机只需在迭代后把源码推上去。
-
-### 一次性配置
-
-1. 让首批文件（含 `.github/workflows/deploy.yml`）进入远端 main，见 `site-takeover/交付/GitHub同步操作.md`。
-2. 源码仓库 → Settings → Secrets and variables → Actions → 新建 `DING_PAGES_TOKEN`，值为可写 `DING-` 仓库 Contents 的 personal access token。
-3. 首次运行若因缺少该 secret 失败，配置后在 Actions 页 Re-run jobs，或再 push 一次。
-
-### 日常迭代
+本机 `git push` 到 `github.com` 被网络策略拦截（代理返回 502、直连超时），但 `api.github.com` 可达，因此同步走 GitHub REST 接口；令牌存放在系统加密钥匙串，脚本只读取、不打印明文。源码同步按「远端文件树 vs 本地文件」做内容差异，不依赖 git 的远程引用；站点发布用一次提交整体替换 `assets/`，历史干净。
 
 ```bash
 cd site-takeover/交付
-./push-to-github.sh "简述本次改动"     # 自动提交 + 推送
-./push-to-github.sh                    # 不带参数：仅推送已有提交
+./push-to-github.sh "简述本次改动"     # 自动提交 + 同步源码 + 构建 + 发布
+./push-to-github.sh                    # 不带参数：只同步已有提交
 ```
 
-脚本先探测凭据，无凭据时明确报错且不会静默失败。推送后在 `https://github.com/jding8190-source/DING/actions` 查看结果；构建产物与线上一致时自动跳过发布提交。只改 Markdown 不会触发部署（`paths-ignore`），可用 `workflow_dispatch` 手动触发。
+脚本会校验同步后远端文件与本地逐字节一致；构建产物与线上相同时自动跳过发布提交，不产生空提交。
+
+### 可选增强：云端 GitHub Actions
+
+`site-takeover/交付/deploy-cloud-ci.yml.template` 是云端自动构建模板：push 到 main 后由 GitHub Actions 执行 `npm ci → lint → build → 同步 dist 到 DING-`，本机只需推源码。启用需把模板内容放进仓库的 `.github/workflows/deploy.yml`；当前令牌授权范围为 `repo`、不含 `workflow`，接口无法写入工作流文件，可在仓库网页手动创建一次，或改用带 `workflow` 权限的令牌后由 WorkBuddy 写入。仓库密钥 `DING_PAGES_TOKEN` 已通过接口预置，模板启用即可用。
 
 ### 部署仓库的保留项
 
-`.nojekyll` 与 `404.html` 不随构建删除；`assets/` 是带内容哈希的构建产物，每次发布先清空再复制，避免旧版本累积。`vite.config.ts` 的 `base: './'` 保证 `/DING-/` 子路径下资源引用正确。
-
-### 零令牌备选
-
-`site-takeover/交付/deploy-selfhosted.yml.template` 用官方 Pages Actions 在 `DING` 仓库内自托管，内置令牌即可发布，零额外密钥；代价是线上地址变为 `/DING/`，原 `/DING-/` 链接需设置跳转。详见同步操作说明。
+`.nojekyll` 与 `404.html` 不随构建删除；`assets/` 作为整体子树替换，旧构建文件自动淘汰。`vite.config.ts` 的 `base: './'` 保证 `/DING-/` 子路径下资源引用正确。
