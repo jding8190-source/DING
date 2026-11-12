@@ -17,7 +17,7 @@
 | 样式 | Tailwind CSS 4（`@tailwindcss/vite`）+ 自定义 `src/index.css` |
 | 动效 / 图标 | motion（原 framer-motion）/ lucide-react |
 | 路由 | react-router-dom `HashRouter`（GitHub Pages 无需服务端重写） |
-| 数据层 | Firebase Auth + Cloud Firestore（在线 CMS，可离线回退） |
+| 数据层 | 本地内容库 `src/data/content.ts`（构建时打包、本机管理台可写）+ Firebase Auth（仅后台登录入口） |
 | 入口 | `index.html` → `src/main.tsx` → `src/App.tsx` |
 
 ```bash
@@ -76,19 +76,43 @@ npm run preview    # 预览构建产物
 
 ---
 
-## 4. 内容在哪里改（双轨数据源，重要）
+## 4. 内容管理台（2026-11-12 新增）
 
-站点文案有两层，**在线数据优先、本地兜底**：
+站点内容只有**一个数据源**：`src/data/content.ts`，结构为 `{ settings, projects, experiences }`。构建时打包进产物，线上只读；本机管理台负责写入。
 
-| 数据 | 本地兜底（改源码，可版本化） | 在线覆盖（免重新部署） |
-| --- | --- | --- |
-| 站点标题、Hero 文案、联系方式、分类、关于文案 | `src/lib/settings.tsx` → `DEFAULT_SETTINGS` | Firestore `settings/global` |
-| 项目卡片与案例详情 | `src/constants.ts` → `projects` | Firestore `projects` 集合 |
-| 履历三段 | `src/components/Experience.tsx` → `staticExperiences` | Firestore `experiences` 集合 |
+### 启动与登录
 
-各组件用 `onSnapshot` 实时订阅 Firestore：有数据则覆盖本地常量，集合为空或连接失败自动回退本地常量。因此**断网也能完整渲染**。后台 `/admin` 可视化编辑这些字段，登录受 Firebase Auth 限制。
+```bash
+cd site-takeover/DING
+npm run dev                 # http://localhost:3000
+```
 
-> 接管后的建议：以本地源码为唯一事实来源，改内容直接改上面三个文件并走构建发布；在线后台只用于临时快改，避免「线上有值、源码没改」造成版本漂移。
+打开 `http://localhost:3000/#/admin`（或按 Ctrl/Cmd + Shift + A），用管理口令登录（初始值见 `src/data/defaults.ts` 的 `adminPasscode`，可在后台「站点模块」页修改）。
+
+### 能编辑什么
+
+| 页签 | 可编辑内容 |
+| --- | --- |
+| 项目 | 标题、分类、年份、客户、角色、封面、摘要、案例介绍、多图集、长图、视频、外链、原型嵌入、设计目标、量化成果、复盘、过程步骤；支持新增 / 修改 / 删除 |
+| 目录菜单分类 | 分类项增删 |
+| 站点模块 | 全部 `SiteSettings` 字段：网站名称、页面标题、徽标、定位、Hero 六项、首屏背景、简介、理念、技能标签、状态、邮箱、微信、所在地、版权、管理口令 |
+| 履历 | 公司、职位、周期、描述，支持增删改 |
+
+### 媒体上传
+
+图片（JPG / PNG / WebP / **GIF 动图**）、长图、视频（MP4 / WebM / MOV / OGG）、首屏背景均为**真实文件上传**，写入 `public/uploads/`，返回 `./uploads/<随机文件名>` 并随构建发布。单文件上限 200 MB，类型白名单校验，文件名由服务端生成，不信任客户端文件名。视频上传后自动填入播放地址并切换为原生直链。
+
+> 旧的 base64 data URL 直写 Firestore 已移除：Firestore 文档 1 MiB 上限无法承载视频与大 GIF，且该 Firebase 项目属 AI Studio 时代、本机实测端点不可达（SSL 握手超时 / 代理 502）。
+
+### 保存与发布
+
+- 本机：点「保存」→ 写入 `src/data/content.ts` → Vite 自动刷新，前台即时生效。
+- 线上：`cd site-takeover/交付 && ./push-to-github.sh "内容更新"` → 构建并发布到 GitHub Pages。
+- 线上站点为静态只读版本，`/admin` 会显示只读提示；编辑请回本机管理台。
+
+### 回退与源码默认值
+
+`src/data/defaults.ts` 保存首次默认值（`DEFAULT_SETTINGS`、`staticExperiences`），`src/constants.ts` 保存 4 个示例项目。当 `content.ts` 中某字段为 `null` 时回退到这些文件；一旦在后台保存过，`content.ts` 即为唯一事实来源，可用 git 回溯任意版本。
 
 **静态资源**：图片放 `public/`，引用一律用相对路径（Vite `base: './'`）。`public/assets/aistudio/` 下 5 张图是 AI Studio 时代遗留素材，当前仍作为资产保留，不参与 Gemini 相关调用。
 
@@ -100,7 +124,7 @@ npm run preview    # 预览构建产物
 2. 移除 `@google/genai` 依赖——全仓库源码无任何调用，属 Gemini 工具链残留；同步更新 `package-lock.json`。
 3. 移除 `vite.config.ts` 中的 `loadEnv` 与 `process.env.GEMINI_API_KEY` 注入；改写 `.env.example`，本地开发不再需要任何大模型密钥。
 4. 补齐原仓库缺失的 `@types/react` / `@types/react-dom`（19.x）。这是 `Admin.tsx` 两处 `unknown → Blob` 与 `ErrorBoundary.tsx` 一处 `props` 类型报错的根因；补齐后 `npm run lint` 无报错。
-5. 保留 Firebase 数据层：它是站点的 CMS 后端，不属于 Gemini 生成工具链，移除会破坏后台与实时内容同步。
+5. 2026-11-12 起数据层改为本地内容库；Firebase Auth 仅保留作为后台 Google 登录入口，Cloud Firestore 不再参与内容读写（原因见第 4 节）。
 6. 2026-11-10 正式接管：`hero_bg.png`、`hero_bg.webp` 与 `assets/aistudio/` 下 5 张图共 7 个视觉文件，与源码 `public/` 逐字节 SHA-256 比对一致；清理后的源码状态提交为接管基线 `7b1322d`，后续改动均以此为起点可回溯。
 
 ---
@@ -142,7 +166,7 @@ git add -A && git commit -m "update portfolio" && git push
 
 ## 8. 后续维护约定
 
-- 内容与视觉改动直接改本地源码，提交前跑 `npm run lint && npm run build`。
+- 内容改动优先走本机管理台（写入 `src/data/content.ts`）；视觉与代码改动直接改源码，提交前跑 `npm run lint && npm run build`。
 - 不引入大模型 SDK、不注入 AI 密钥；生成与维护由 WorkBuddy 承担。
 - 新增图片放 `public/`，优先 webp，保留 png 回退；避免把大图提交进 `src/`。
 - 首屏标题、导航、联系方式等对外文案改动需与简历 / 作品集口径保持一致，避免多渠道信息冲突。
