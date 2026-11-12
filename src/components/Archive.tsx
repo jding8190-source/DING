@@ -4,8 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight } from 'lucide-react';
 import Navigation from './Navigation';
 import { useState, useEffect } from 'react';
-import { db } from '../lib/firebase';
-import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db, collection, getDocs, query, orderBy } from '../lib/localStore';
 
 export default function Archive() {
   const [projects, setProjects] = useState<any[]>(staticProjects);
