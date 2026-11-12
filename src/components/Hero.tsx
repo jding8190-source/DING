@@ -93,7 +93,7 @@ export default function Hero() {
               onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
               className="apple-glass-button apple-glass-interactive text-white/90 hover:text-white px-8 py-4.5 rounded-full text-xs font-mono tracking-widest uppercase flex items-center gap-2"
             >
-              <span>关于作品 / ABOUT</span>
+              <span>{settings.heroAboutButtonText || '关于作品 / ABOUT'}</span>
             </button>
           </motion.div>
         </motion.div>
