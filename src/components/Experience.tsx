@@ -1,28 +1,9 @@
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db, collection, onSnapshot, query, orderBy } from '../lib/localStore';
+import { staticExperiences } from '../data/defaults';
 
-export const staticExperiences = [
-  {
-    company: 'Global Creative Studio',
-    role: 'Lead Product Designer',
-    period: '2021 — Present',
-    description: '负责核心产品的视觉系统构建与交互策略定义，主导了多个国际级数字化转型项目，提升用户参与度达 40% 以上。'
-  },
-  {
-    company: 'Innovation Lab',
-    role: 'Senior UI/UX Designer',
-    period: '2018 — 2021',
-    description: '专注于前沿实验性交互设计，在移动端体验与品牌数字化表达领域进行了深入探索，获得多项国际设计奖项。'
-  },
-  {
-    company: 'Art & Tech Collective',
-    role: 'Visual Designer',
-    period: '2015 — 2018',
-    description: '通过跨媒体的设计语言，为科技品牌提供极具叙事感的视觉解决方案，探索艺术与科技的交汇点。'
-  }
-];
+export { staticExperiences };
 
 export default function Experience() {
   const [experiences, setExperiences] = useState<any[]>(staticExperiences);
