@@ -19,7 +19,7 @@ const snapshot: any = persisted || {};
 const clone = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 let state: any = {
-  settings: snapshot.settings == null ? clone(DEFAULT_SETTINGS) : snapshot.settings,
+  settings: { ...clone(DEFAULT_SETTINGS), ...(snapshot.settings || {}) },
   projects: snapshot.projects == null ? clone(defaultProjects) : snapshot.projects,
   experiences: snapshot.experiences == null
     ? staticExperiences.map((item, i) => ({ id: `exp-${i + 1}`, ...item }))
