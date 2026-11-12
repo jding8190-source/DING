@@ -19,11 +19,11 @@ export default function About() {
             className="space-y-12"
           >
             <div>
-              <span className="text-meta">Philosophy</span>
+              <span className="text-meta">{settings.aboutLabel || 'Philosophy'}</span>
             </div>
             <h2 className="text-display text-[clamp(2.5rem,5vw,5rem)]">
-              极致之美来源于 <br />
-              <span className="text-zinc-600">秩序的延伸.</span>
+              {settings.aboutHeadline || '极致之美来源于'} <br />
+              <span className="text-zinc-600">{settings.aboutHeadlineAccent || '秩序的延伸.'}</span>
             </h2>
             <p className="text-body max-w-xl leading-relaxed text-zinc-400">
               {settings.aboutPhilosophy || '设计不仅是视觉的堆砌，而是一种理性的秩序。我专注于在数字留白中探寻功能与情感的最佳平衡，让每一个像素都拥有其存在的必然性。'}
@@ -32,7 +32,7 @@ export default function About() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
             <div className="space-y-10">
-              <span className="text-meta border-b border-white/10 pb-4 block">Expertise</span>
+              <span className="text-meta border-b border-white/10 pb-4 block">{settings.aboutExpertiseLabel || 'Expertise'}</span>
               <ul className="space-y-4">
                 {skills.map((item) => (
                   <li key={item} className="text-label text-white">{item}</li>
@@ -40,7 +40,7 @@ export default function About() {
               </ul>
             </div>
             <div className="space-y-10">
-              <span className="text-meta border-b border-white/10 pb-4 block">About Me</span>
+              <span className="text-meta border-b border-white/10 pb-4 block">{settings.aboutMeLabel || 'About Me'}</span>
               <p className="text-xs text-zinc-400 leading-relaxed font-light">
                 {settings.aboutBio || '聚焦于极简、秩序感与空间深度的跨学科数字体验设计。致力于将尖端科技与高级极简视觉融汇一体。'}
               </p>
@@ -61,7 +61,7 @@ export default function About() {
           className="mt-40 aspect-[21/9] bg-zinc-950 rounded-lg overflow-hidden border border-white/5"
         >
           <img 
-            src="https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=2000" 
+            src={settings.aboutImageUrl || 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=2000'} 
             className="w-full h-full object-cover grayscale opacity-20 hover:opacity-40 transition-opacity duration-1000"
             alt="Studio perspective"
             referrerPolicy="no-referrer"
