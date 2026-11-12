@@ -1,34 +1,9 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { db } from './firebase';
-import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
+import { db, doc, onSnapshot, setDoc, getDoc } from './localStore';
+import { DEFAULT_SETTINGS } from '../data/defaults';
 import { SiteSettings } from '../types';
 
-export const DEFAULT_SETTINGS: SiteSettings = {
-  siteName: "Ding Jie",
-  siteTitle: "Ding Jie — Creative Director & Product Designer",
-  logoText: "ZC",
-  designerRole: "Creative Director",
-  
-  heroHeadline: "DESIGN",
-  heroTagline: "Creative Exhibition Lab",
-  heroExhibitTag: "PORTFOLIO CURATION 2024-2026",
-  heroLocation: "SHANGHAI / TOKYO / REMOTE",
-  heroCtaText: "Enter Exhibition",
-  heroBgUrl: "./hero_bg.png",
-
-  aboutBio: "聚焦于极简、秩序感与空间深度的跨学科数字体验设计。致力于将尖端科技与高级极简视觉融汇一体，通过克制的排版、通透的光影与精准的交互构建卓越的产品体验。",
-  aboutPhilosophy: "优秀的设计不应喧宾夺主，而应如静水深流，在触动使用者的瞬间建立起牢固的情感链接与认知秩序。",
-  aboutSkills: ["Design Systems", "Product Architecture", "Spatial UI", "Art Direction", "Motion Prototyping", "Visual Branding"],
-  availableStatus: "Available — 2024-2026",
-
-  contactEmail: "jding8190@gmail.com",
-  contactWechat: "dingjie_design",
-  contactLocation: "Shanghai, China & Remote",
-  copyrightText: "© 2024-2026 DING JIE. ALL RIGHTS RESERVED.",
-
-  categories: ["全部", "项目应用", "品牌视觉", "运营设计"],
-  adminPasscode: "ding8190"
-};
+export { DEFAULT_SETTINGS };
 
 interface SettingsContextType {
   settings: SiteSettings;
