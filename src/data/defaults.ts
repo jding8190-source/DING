@@ -25,7 +25,22 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   copyrightText: "© 2024-2026 DING JIE. ALL RIGHTS RESERVED.",
 
   categories: ["全部", "项目应用", "品牌视觉", "运营设计"],
-  adminPasscode: "ding8190"
+  adminPasscode: "ding8190",
+
+  heroAboutButtonText: "关于作品 / ABOUT",
+  aboutLabel: "Philosophy",
+  aboutHeadline: "极致之美来源于",
+  aboutHeadlineAccent: "秩序的延伸.",
+  aboutExpertiseLabel: "Expertise",
+  aboutMeLabel: "About Me",
+  aboutImageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=2000",
+  contactBadge: "Contact & Collaboration",
+  contactHeadline: "创造更有价值的",
+  contactHeadlineAccent: "数字感官体验.",
+  contactIntro: "如果您有有趣的项目或合作想法，欢迎随时联系。我一直在寻找能够挑战传统并重塑交互的机会。",
+  contactEmailLabel: "Direct Communication / 邮件联络",
+  contactWechatLabel: "WeChat 微信",
+  contactLocationLabel: "Location 所在地"
 };
 
 export const staticExperiences = [
