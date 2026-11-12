@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   auth, 
-  db, 
-  googleProvider, 
-  handleFirestoreError, 
-  OperationType 
+  googleProvider 
 } from '../lib/firebase';
 import { 
   signInWithPopup, 
@@ -12,19 +9,11 @@ import {
   onAuthStateChanged, 
   User 
 } from 'firebase/auth';
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
-  orderBy,
-  serverTimestamp,
-  getDoc,
-  onSnapshot
-} from 'firebase/firestore';
+import {
+  db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy,
+  serverTimestamp, getDoc, onSnapshot, handleFirestoreError, OperationType, isWritable
+} from '../lib/localStore';
+import { uploadFile, uploadFiles } from '../lib/upload';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LogIn, 
@@ -77,6 +66,10 @@ interface ProjectFormState {
   videoUrl: string;
   videoType: 'direct' | 'embed' | 'bilibili' | 'youtube';
   externalLinks: ExternalLinkType[];
+  goalsText: string;
+  outcomesText: string;
+  learnings: string;
+  processText: string;
 }
 
 const DEFAULT_PROJECT_FORM: ProjectFormState = {
@@ -93,7 +86,11 @@ const DEFAULT_PROJECT_FORM: ProjectFormState = {
   longImages: [],
   videoUrl: '',
   videoType: 'direct',
-  externalLinks: []
+  externalLinks: [],
+  goalsText: '',
+  outcomesText: '',
+  learnings: '',
+  processText: ''
 };
 
 export default function Admin() {
@@ -132,6 +129,8 @@ export default function Admin() {
   const coverFileInputRef = useRef<HTMLInputElement>(null);
   const multiFileInputRef = useRef<HTMLInputElement>(null);
   const longFileInputRef = useRef<HTMLInputElement>(null);
+  const videoFileInputRef = useRef<HTMLInputElement>(null);
+  const heroBgFileInputRef = useRef<HTMLInputElement>(null);
 
   // Category management state
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -161,6 +160,12 @@ export default function Admin() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  useEffect(() => {
+    const handler = (event: Event) => showToast((event as CustomEvent<string>).detail);
+    window.addEventListener('ding-admin-toast', handler);
+    return () => window.removeEventListener('ding-admin-toast', handler);
+  }, []);
 
   useEffect(() => {
     // Check if passcode session exists
@@ -367,78 +372,84 @@ export default function Admin() {
       longImages: Array.isArray(item.longImages) ? item.longImages : [],
       videoUrl: item.videoUrl || '',
       videoType: item.videoType || 'direct',
-      externalLinks: Array.isArray(item.externalLinks) ? item.externalLinks : []
+      externalLinks: Array.isArray(item.externalLinks) ? item.externalLinks : [],
+      goalsText: (item.goals || []).join('\n'),
+      outcomesText: (item.outcomes || []).join('\n'),
+      learnings: item.learnings || '',
+      processText: (item.process || []).map((s: any) => [s.title, s.description, s.imageUrl].filter(Boolean).join(' | ')).join('\n')
     });
     setIsModalOpen(true);
   };
 
-  // Cover image compressor
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // 媒体上传：真实文件写入 public/uploads/，返回站内相对地址
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1920;
-        let width = img.width;
-        let height = img.height;
-        if (width > MAX_WIDTH) {
-          height = Math.round((height * MAX_WIDTH) / width);
-          width = MAX_WIDTH;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.88);
-          setFormData(prev => ({ ...prev, imageUrl: dataUrl }));
-          showToast('封面图片已成功载入！');
-        }
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
+    try {
+      const url = await uploadFile(file);
+      setFormData(prev => ({ ...prev, imageUrl: url }));
+      showToast('封面已上传！');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '封面上传失败');
+    }
+    input.value = '';
   };
 
-  // Multi-image upload handler (jpg, png, gif, webp)
-  const handleMultiImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        setFormData(prev => ({
-          ...prev,
-          images: [...prev.images, dataUrl]
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
-    showToast(`已添加 ${files.length} 张作品图片！`);
+  const handleMultiImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    try {
+      const urls = await uploadFiles(files);
+      setFormData(prev => ({ ...prev, images: [...prev.images, ...urls] }));
+      showToast(`已上传 ${urls.length} 张图片 / GIF 动图！`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '图片上传失败');
+    }
+    input.value = '';
   };
 
-  // Long image upload handler
-  const handleLongImagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleLongImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const files = Array.from(input.files || []);
+    if (!files.length) return;
+    try {
+      const urls = await uploadFiles(files);
+      setFormData(prev => ({ ...prev, longImages: [...prev.longImages, ...urls] }));
+      showToast(`已上传 ${urls.length} 张长图！`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '长图上传失败');
+    }
+    input.value = '';
+  };
 
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        setFormData(prev => ({
-          ...prev,
-          longImages: [...prev.longImages, dataUrl]
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
-    showToast(`已添加 ${files.length} 张长图案例！`);
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      setFormData(prev => ({ ...prev, videoUrl: url, videoType: 'direct' }));
+      showToast('视频已上传，保存后将在详情页播放！');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '视频上传失败');
+    }
+    input.value = '';
+  };
+
+  const handleHeroBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      setSiteForm(prev => ({ ...prev, heroBgUrl: url }));
+      showToast('首屏背景已上传！');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '背景上传失败');
+    }
+    input.value = '';
   };
 
   // External link addition
@@ -483,6 +494,13 @@ export default function Admin() {
         videoUrl: formData.videoUrl.trim(),
         videoType: formData.videoType,
         externalLinks: formData.externalLinks,
+        goals: formData.goalsText.split('\n').map(s => s.trim()).filter(Boolean),
+        outcomes: formData.outcomesText.split('\n').map(s => s.trim()).filter(Boolean),
+        learnings: formData.learnings.trim(),
+        process: formData.processText.split('\n').map(s => s.trim()).filter(Boolean).map(line => {
+          const [title, description, imageUrl] = line.split('|').map(part => part.trim());
+          return { title, description: description || '', imageUrl: imageUrl || '' };
+        }),
         adminToken: 'ding8190_admin_token',
         updatedAt: serverTimestamp()
       };
@@ -930,6 +948,12 @@ export default function Admin() {
         </div>
 
         {/* TAB 1: PROJECTS MANAGEMENT */}
+        {!isWritable && (
+          <div className="mb-8 p-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 text-amber-200 text-xs leading-relaxed">
+            当前为线上只读版本。内容编辑与图片 / 视频 / GIF 上传请在本机运行 <code className="font-mono">npm run dev</code> 后打开 http://localhost:3000/#/admin 使用管理台；编辑结果通过 site-takeover/交付/push-to-github.sh 发布上线。
+          </div>
+        )}
+
         {activeTab === 'projects' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -1177,6 +1201,51 @@ export default function Admin() {
                     value={siteForm.logoText || ''}
                     onChange={(e) => setSiteForm(prev => ({ ...prev, logoText: e.target.value }))}
                     className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 1.1 页面标题 / 技能标签 / 首屏背景 */}
+            <div className="p-6 bg-zinc-950 border border-white/5 rounded-2xl space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+                <SettingsIcon size={16} className="text-amber-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">页面标题 / 技能标签 / 首屏背景</h3>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-zinc-400">浏览器页面标题 (siteTitle)</label>
+                <input
+                  type="text"
+                  value={siteForm.siteTitle || ''}
+                  onChange={(e) => setSiteForm(prev => ({ ...prev, siteTitle: e.target.value }))}
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-zinc-400">关于模块技能标签（英文逗号分隔）</label>
+                <input
+                  type="text"
+                  value={(siteForm.aboutSkills || []).join(', ')}
+                  onChange={(e) => setSiteForm(prev => ({ ...prev, aboutSkills: e.target.value.split(/[,，]/).map(v => v.trim()).filter(Boolean) }))}
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-zinc-400">首屏背景图（上传文件或填写链接）</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => heroBgFileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white text-white hover:text-black px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
+                  >
+                    <Upload size={13} /> 上传背景
+                  </button>
+                  <input type="file" ref={heroBgFileInputRef} onChange={handleHeroBgUpload} accept="image/*,.gif" className="hidden" />
+                  <input
+                    type="text"
+                    value={siteForm.heroBgUrl || ''}
+                    onChange={(e) => setSiteForm(prev => ({ ...prev, heroBgUrl: e.target.value }))}
+                    className="flex-1 bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
                   />
                 </div>
               </div>
@@ -1522,7 +1591,7 @@ export default function Admin() {
                     >
                       <Upload className="mx-auto text-zinc-500 mb-3" size={28} />
                       <p className="text-xs font-bold text-white uppercase tracking-wider">点击上传作品主封面</p>
-                      <p className="text-[11px] text-zinc-500 mt-1">支持 JPG, PNG, GIF, WebP (自动高品质优化)</p>
+                      <p className="text-[11px] text-zinc-500 mt-1">支持 JPG, PNG, GIF, WebP（原文件直传）</p>
                     </div>
                   )}
 
@@ -1659,7 +1728,7 @@ export default function Admin() {
                       onClick={() => multiFileInputRef.current?.click()}
                       className="flex items-center gap-1.5 bg-white/10 hover:bg-white text-white hover:text-black px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
                     >
-                      <Plus size={13} /> 上传多张图片 (支持 JPG, PNG, GIF, WebP)
+                      <Plus size={13} /> 上传图片 / GIF 动图
                     </button>
                     <input 
                       type="file" 
@@ -1745,6 +1814,18 @@ export default function Admin() {
                     <Film size={16} className="text-amber-400" />
                     <h4 className="text-xs font-bold uppercase tracking-wider text-white">独立视频播放窗口</h4>
                   </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => videoFileInputRef.current?.click()}
+                      className="flex items-center gap-1.5 bg-white/10 hover:bg-white text-white hover:text-black px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                    >
+                      <Upload size={13} /> 上传视频文件 (MP4 / WebM / MOV)
+                    </button>
+                    <input type="file" ref={videoFileInputRef} onChange={handleVideoUpload} accept="video/*,.gif" className="hidden" />
+                    <span className="text-[11px] text-zinc-500">上传后自动填入播放地址并切换为原生直链；也可在下方填写外部视频链接。</span>
+                  </div>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="sm:col-span-2 space-y-1">
@@ -1787,6 +1868,32 @@ export default function Admin() {
                       </button>
                     </div>
                   )}
+                </div>
+
+                {/* 5.5 目标 / 成果 / 复盘 / 过程步骤 */}
+                <div className="p-5 bg-zinc-950 border border-white/5 rounded-2xl space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Layers size={16} className="text-amber-400" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-white">项目目标、成果与过程</h4>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] text-zinc-400">设计目标（每行一条）</label>
+                      <textarea rows={3} value={formData.goalsText} onChange={(e) => setFormData(prev => ({ ...prev, goalsText: e.target.value }))} className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-xs text-white leading-relaxed" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-[11px] text-zinc-400">量化成果（每行一条）</label>
+                      <textarea rows={3} value={formData.outcomesText} onChange={(e) => setFormData(prev => ({ ...prev, outcomesText: e.target.value }))} className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-xs text-white leading-relaxed" />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="block text-[11px] text-zinc-400">复盘总结</label>
+                      <textarea rows={2} value={formData.learnings} onChange={(e) => setFormData(prev => ({ ...prev, learnings: e.target.value }))} className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-xs text-white leading-relaxed" />
+                    </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="block text-[11px] text-zinc-400">过程步骤（每行：标题 | 描述 | 图片链接，后两项可省略）</label>
+                      <textarea rows={3} value={formData.processText} onChange={(e) => setFormData(prev => ({ ...prev, processText: e.target.value }))} className="w-full bg-zinc-900 border border-white/10 rounded-xl p-3 text-xs text-white leading-relaxed" />
+                    </div>
+                  </div>
                 </div>
 
                 {/* 6. EXTERNAL LINKS & EMBEDS */}
