@@ -64,4 +64,20 @@ export interface SiteSettings {
 
   // Admin access
   adminPasscode?: string;
+
+  // 版块标题与引导语（2026-11-12 起可在后台编辑）
+  heroAboutButtonText?: string;
+  aboutLabel?: string;
+  aboutHeadline?: string;
+  aboutHeadlineAccent?: string;
+  aboutExpertiseLabel?: string;
+  aboutMeLabel?: string;
+  aboutImageUrl?: string;
+  contactBadge?: string;
+  contactHeadline?: string;
+  contactHeadlineAccent?: string;
+  contactIntro?: string;
+  contactEmailLabel?: string;
+  contactWechatLabel?: string;
+  contactLocationLabel?: string;
 }
