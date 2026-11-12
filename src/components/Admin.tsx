@@ -131,6 +131,7 @@ export default function Admin() {
   const longFileInputRef = useRef<HTMLInputElement>(null);
   const videoFileInputRef = useRef<HTMLInputElement>(null);
   const heroBgFileInputRef = useRef<HTMLInputElement>(null);
+  const aboutImageFileInputRef = useRef<HTMLInputElement>(null);
 
   // Category management state
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -448,6 +449,20 @@ export default function Admin() {
       showToast('首屏背景已上传！');
     } catch (err) {
       showToast(err instanceof Error ? err.message : '背景上传失败');
+    }
+    input.value = '';
+  };
+
+  const handleAboutImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadFile(file);
+      setSiteForm(prev => ({ ...prev, aboutImageUrl: url }));
+      showToast('关于模块配图已上传！');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '配图上传失败');
     }
     input.value = '';
   };
@@ -1245,6 +1260,60 @@ export default function Admin() {
                     type="text"
                     value={siteForm.heroBgUrl || ''}
                     onChange={(e) => setSiteForm(prev => ({ ...prev, heroBgUrl: e.target.value }))}
+                    className="flex-1 bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 1.2 各版块标题与引导语 */}
+            <div className="p-6 bg-zinc-950 border border-white/5 rounded-2xl space-y-4">
+              <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+                <FileText size={16} className="text-amber-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">各版块标题与引导语</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {([
+                  ['heroAboutButtonText', '首屏次按钮文字'],
+                  ['aboutLabel', '关于模块小标签'],
+                  ['aboutHeadline', '关于模块主标题'],
+                  ['aboutHeadlineAccent', '关于模块副标题'],
+                  ['aboutExpertiseLabel', '专长栏目标签'],
+                  ['aboutMeLabel', '个人简介栏目标签'],
+                  ['contactBadge', '联系模块徽章'],
+                  ['contactHeadline', '联系模块主标题'],
+                  ['contactHeadlineAccent', '联系模块副标题'],
+                  ['contactIntro', '联系模块引导语'],
+                  ['contactEmailLabel', '邮件栏目标签'],
+                  ['contactWechatLabel', '微信栏目标签'],
+                  ['contactLocationLabel', '所在地栏目标签']
+                ] as const).map(([key, label]) => (
+                  <div key={key} className="space-y-1.5">
+                    <label className="text-xs text-zinc-400">{label}</label>
+                    <input
+                      type="text"
+                      value={(siteForm as any)[key] || ''}
+                      onChange={(e) => setSiteForm(prev => ({ ...prev, [key]: e.target.value }) as SiteSettings)}
+                      className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2 text-xs text-white"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-zinc-400">关于模块配图（上传文件或填写链接）</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => aboutImageFileInputRef.current?.click()}
+                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white text-white hover:text-black px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0"
+                  >
+                    <Upload size={13} /> 上传配图
+                  </button>
+                  <input type="file" ref={aboutImageFileInputRef} onChange={handleAboutImageUpload} accept="image/*,.gif" className="hidden" />
+                  <input
+                    type="text"
+                    value={siteForm.aboutImageUrl || ''}
+                    onChange={(e) => setSiteForm(prev => ({ ...prev, aboutImageUrl: e.target.value }))}
                     className="flex-1 bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
                   />
                 </div>
