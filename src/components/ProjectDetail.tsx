@@ -14,8 +14,7 @@ import {
 } from 'lucide-react';
 import { projects as staticProjects } from '../constants';
 import { useEffect, useState, useMemo } from 'react';
-import { db } from '../lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { db, doc, getDoc } from '../lib/localStore';
 import { Project } from '../types';
 
 export default function ProjectDetail() {
