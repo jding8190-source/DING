@@ -17,8 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { db } from '../lib/firebase';
-import { collection, getDocs, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { db, collection, getDocs, onSnapshot, query, orderBy } from '../lib/localStore';
 
 import { useSiteSettings } from '../lib/settings';
 
