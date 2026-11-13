@@ -104,11 +104,11 @@ npm run preview    # 预览构建产物
 
 ### 媒体上传
 
-图片（JPG / PNG / WebP / **GIF 动图**）、长图、视频（MP4 / WebM / MOV / OGG）、首屏背景、关于配图均为真实文件上传，写入部署仓库根目录 `media_<时间戳>-<随机>.<扩展名>`，返回 `./media_...`。单文件上限 100 MB（GitHub blob 限制），类型白名单校验，文件名由代码生成，不信任客户端文件名。视频上传后自动填入播放地址并切换为原生直链。本机 dev 下文件不落本地磁盘，由 `vite-plugin-admin-api.ts` 回源到线上，避免上传触发页面刷新丢失表单。
+图片（JPG / PNG / WebP / **GIF 动图**）、长图、视频（MP4 / WebM / MOV / OGG）、首屏背景、关于配图均为真实文件上传；多选文件合并为**一次提交**，提交串行执行并在 409 / 5xx 时自动重试，本机另存一份到 `public/` 供缩略图即时显示，写入部署仓库根目录 `media_<时间戳>-<随机>.<扩展名>`，返回 `./media_...`。单文件上限 100 MB（GitHub blob 限制），类型白名单校验，文件名由代码生成，不信任客户端文件名。视频上传后自动填入播放地址并切换为原生直链。本机 dev 下文件不落本地磁盘，由 `vite-plugin-admin-api.ts` 回源到线上，避免上传触发页面刷新丢失表单。
 
 ### 发布链路
 
-`localStore.commit()` → `remoteStore.publishContent(state)` → GitHub Git Data API（blob → tree → commit → 更新 main）→ GitHub Pages。每次保存都是一次可回溯提交。线上保存由浏览器直连 `api.github.com`（已实测 CORS 允许 PUT + Authorization）；本机保存走 `/api/github` 代理。
+`localStore.commit()` → `remoteStore.publishContent(state)` → GitHub Git Data API（blob → tree → commit → 更新 main）→ GitHub Pages。每次保存都是一次可回溯提交。线上保存由浏览器直连 `api.github.com`（已实测 CORS 允许 PUT + Authorization）；本机保存走 `/api/github` 代理，每次请求的响应码写入 `/tmp/ding-admin-api.log` 便于定位。所有提交在浏览器内串行执行，上传与保存同时进行不会互相顶掉 main 引用。
 
 `./push-to-github.sh` 现在只用于**代码 / 视觉改动**；`publish-via-api.py` 会保留线上的 `content.json` 与 `media_*`，不会覆盖后台改过的内容。
 
