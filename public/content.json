@@ -41,7 +41,7 @@
       "year": "2024",
       "client": "Nexa Finance",
       "description": "专注于个人资本效率的极简金融体验。",
-      "imageUrl": "https://images.unsplash.com/photo-1616077168079-7e09a677fb2c?auto=format&fit=crop&q=80&w=2000",
+      "imageUrl": "./assets/aistudio/image_258e1a5c.png",
       "overview": "Nexa 旨在通过人工智能驱动的洞察力，为高净值人士提供一个直观、极简且强大的资产管理平台。在现有的金融工具中，复杂性往往掩盖了决策的效率。",
       "role": "Lead UI/UX Designer",
       "goals": [
@@ -53,12 +53,12 @@
         {
           "title": "用户研究与痛点识别",
           "description": "我们采访了 15 位目标用户，发现他们对传统移动银行庞杂的功能感到疲惫。他们需要的是一眼就能看清资产流向的“直觉”。",
-          "imageUrl": "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&q=80&w=1200"
+          "imageUrl": "./assets/aistudio/image_258e1a5c.png"
         },
         {
           "title": "交互原型设计",
           "description": "我们采用了纵向卡片流的设计，将最重要的财务数据置于视觉中心。通过多次迭代，我们将主页的点击层级缩减了 40%。",
-          "imageUrl": "https://images.unsplash.com/photo-1586717791821-3f44a563eb4c?auto=format&fit=crop&q=80&w=1200"
+          "imageUrl": "./assets/aistudio/image_258e1a5c.png"
         }
       ],
       "outcomes": [
@@ -76,7 +76,7 @@
       "year": "2024",
       "client": "Nomad Labs",
       "description": "通过空间化界面重新定义探索方式。",
-      "imageUrl": "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=2000",
+      "imageUrl": "./assets/aistudio/image_5caa898e.png",
       "overview": "Horizon 是一个为深层次旅行者设计的导航工具，它不提供最快的路径，而是提供最具美感的探索路线。",
       "role": "Product Designer",
       "goals": [
@@ -88,7 +88,7 @@
         {
           "title": "视觉风格探索",
           "description": "我们选择了能够根据目的地环境色实时变化的流体渐变作为界面背景，使产品本身成为旅行体验的一部分。",
-          "imageUrl": "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?auto=format&fit=crop&q=80&w=1200"
+          "imageUrl": "./assets/aistudio/image_258e1a5c.png"
         }
       ],
       "outcomes": [
@@ -105,7 +105,7 @@
       "year": "2024",
       "client": "Etheria Tech",
       "description": "为科技初创公司打造纯净、通透的品牌视觉体系。",
-      "imageUrl": "https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80&w=2000",
+      "imageUrl": "./assets/aistudio/image_d5107f14.png",
       "overview": "Etheria 需要一个新的品牌形象来传达其“如以太般存在”的轻量化技术理念。",
       "role": "Creative Director",
       "goals": [
@@ -117,12 +117,12 @@
         {
           "title": "视觉符号推导",
           "description": "我们从“流动”与“连接”中提取几何元素，通过数千次的比例调整，确定了最终的品牌图形。",
-          "imageUrl": "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?auto=format&fit=crop&q=80&w=1200"
+          "imageUrl": "./assets/aistudio/image_258e1a5c.png"
         },
         {
           "title": "通透感材质实验",
           "description": "在 UI 层面，我们大量运用毛玻璃效果与动态光影，营造出轻量且富有科技感的视觉张力。",
-          "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200"
+          "imageUrl": "./assets/aistudio/image_258e1a5c.png"
         }
       ],
       "outcomes": [
@@ -138,7 +138,7 @@
       "year": "2024",
       "client": "Glow Lifestyle",
       "description": "结合动态交互的一站式新品导购体验。",
-      "imageUrl": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=2000",
+      "imageUrl": "./assets/aistudio/image_f65ebeae.png",
       "overview": "为 Glow 的春季发布会设计的线上互动页面，旨在通过沉浸式视觉引导转化。",
       "role": "Visual Designer",
       "goals": [
@@ -150,7 +150,7 @@
         {
           "title": "叙事化场景构建",
           "description": "我们不再是简单的展示产品，而是通过长轮播与视差滚动讲述了一个关于“复苏”的故事。",
-          "imageUrl": "https://images.unsplash.com/photo-1506466010722-395aa2bef877?auto=format&fit=crop&q=80&w=1200"
+          "imageUrl": "./assets/aistudio/image_258e1a5c.png"
         }
       ],
       "outcomes": [
