@@ -409,10 +409,15 @@ export default function Admin() {
     const input = e.target;
     const files = Array.from(input.files || []);
     if (!files.length) return;
+    showToast(`正在上传 ${files.length} 个文件，请稍候…`);
     try {
       const urls = await uploadFiles(files);
-      setFormData(prev => ({ ...prev, images: [...prev.images, ...urls] }));
-      showToast(`已上传 ${urls.length} 张图片 / GIF 动图！`);
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...urls],
+        imageUrl: prev.imageUrl.trim() ? prev.imageUrl : urls[0],
+      }));
+      showToast(`已上传 ${urls.length} 张图片 / GIF 动图，已自动写入作品图集！`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : '图片上传失败');
     }
@@ -423,6 +428,7 @@ export default function Admin() {
     const input = e.target;
     const files = Array.from(input.files || []);
     if (!files.length) return;
+    showToast(`正在上传 ${files.length} 张长图，请稍候…`);
     try {
       const urls = await uploadFiles(files);
       setFormData(prev => ({ ...prev, longImages: [...prev.longImages, ...urls] }));
