@@ -56,7 +56,7 @@ async function api(path: string, method = 'GET', body?: unknown): Promise<any> {
 }
 
 /** 一次提交写入多个根级文件；base_tree 保留其余构建产物，路径不含斜杠以避开嵌套 tree 限制。 */
-async function commitFiles(files: { path: string; base64: string }[], message: string): Promise<string> {
+async function commitOnce(files: { path: string; base64: string }[], message: string): Promise<string> {
   const entries: { path: string; mode: string; type: string; sha: string }[] = [];
   for (const file of files) {
     const blob = await api('/git/blobs', 'POST', { content: file.base64, encoding: 'base64' });
@@ -69,6 +69,33 @@ async function commitFiles(files: { path: string; base64: string }[], message: s
   const commit = await api('/git/commits', 'POST', { message, tree: tree.sha, parents: [parent] });
   await api('/git/refs/heads/main', 'PATCH', { sha: commit.sha });
   return commit.sha as string;
+}
+
+// 所有提交串行执行：上传与保存并发时不会互相顶掉 main 引用（避免 409 非快进）。
+let chain: Promise<unknown> = Promise.resolve();
+function serialize<T>(task: () => Promise<T>): Promise<T> {
+  const run = chain.then(task, task);
+  chain = run.catch(() => undefined);
+  return run;
+}
+
+const RETRYABLE = /HTTP (409|422|429|500|502|503|504)/;
+
+async function commitFiles(files: { path: string; base64: string }[], message: string): Promise<string> {
+  return serialize(async () => {
+    let last: unknown = null;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        return await commitOnce(files, message);
+      } catch (error) {
+        last = error;
+        const text = error instanceof Error ? error.message : String(error);
+        if (!RETRYABLE.test(text)) throw error;
+        await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
+      }
+    }
+    throw last instanceof Error ? last : new Error('发布失败：GitHub 多次拒绝提交');
+  });
 }
 
 function bytesToBase64(bytes: Uint8Array): string {
@@ -103,10 +130,17 @@ export async function publishContent(snapshot: any): Promise<string> {
   );
 }
 
-/** 上传媒体：以 media_* 根级文件写入部署仓库，返回站内相对地址。 */
+/** 上传单个媒体：以 media_* 根级文件写入部署仓库，返回站内相对地址。 */
 export async function publishAsset(name: string, base64: string): Promise<string> {
   await commitFiles([{ path: name, base64 }], 'media: 后台上传 ' + name);
   return './' + name;
+}
+
+/** 批量上传：多个文件合并为一次提交，减少部署次数与等待时间。 */
+export async function publishAssets(items: { name: string; base64: string }[]): Promise<string[]> {
+  if (items.length === 0) return [];
+  await commitFiles(items.map(item => ({ path: item.name, base64: item.base64 })), `media: 后台上传 ${items.length} 个文件`);
+  return items.map(item => './' + item.name);
 }
 
 async function tryFetch(url: string): Promise<any | null> {
