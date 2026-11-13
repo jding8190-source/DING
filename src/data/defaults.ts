@@ -33,7 +33,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   aboutHeadlineAccent: "秩序的延伸.",
   aboutExpertiseLabel: "Expertise",
   aboutMeLabel: "About Me",
-  aboutImageUrl: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=2000",
+  aboutImageUrl: "./assets/aistudio/image_f65ebeae.png",
   contactBadge: "Contact & Collaboration",
   contactHeadline: "创造更有价值的",
   contactHeadlineAccent: "数字感官体验.",
