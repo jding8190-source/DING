@@ -89,6 +89,9 @@ export default function adminApi(): Plugin {
             body: body == null ? undefined : JSON.stringify(body),
           });
           const text = await upstream.text();
+          try {
+            fs.appendFileSync('/tmp/ding-admin-api.log', `${new Date().toISOString()} ${method || 'GET'} ${apiPath} -> ${upstream.status}\n`);
+          } catch { /* 日志失败不影响请求 */ }
           res.statusCode = upstream.status;
           res.setHeader('Content-Type', 'application/json; charset=utf-8');
           res.end(text || '{}');
