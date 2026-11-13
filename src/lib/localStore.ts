@@ -1,6 +1,7 @@
 import persisted from '../data/content';
 import { projects as defaultProjects } from '../constants';
 import { DEFAULT_SETTINGS, staticExperiences } from '../data/defaults';
+import { publishContent, fetchLiveContent } from './remoteStore';
 
 /**
  * 本地内容库：与 firebase/firestore 常用 API 形状兼容，去掉了对外部后端的依赖。
@@ -27,28 +28,21 @@ let state: any = {
 };
 
 export const db = {};
-export const isWritable = Boolean((import.meta as any).env?.DEV);
+export const isWritable = true; // 线上与本机均可编辑，写入统一发布到部署仓库
 
 const listeners = new Set<() => void>();
 
+/** 保存即发布：全站内容一次提交到部署仓库 content.json，站点运行时读取，无需重新构建。 */
 async function persist(): Promise<void> {
-  if (!isWritable) {
-    throw new Error('当前为线上只读版本。请在本机运行 npm run dev 后打开管理台编辑内容。');
-  }
-  const res = await fetch('/api/content', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(state),
-  });
-  if (!res.ok) {
-    const out = await res.json().catch(() => ({}));
-    throw new Error(out.error || `内容保存失败（HTTP ${res.status}）`);
-  }
+  await publishContent(state);
 }
 
 async function commit() {
   try {
     await persist();
+  } catch (error) {
+    handleFirestoreError(error);
+    throw error;
   } finally {
     listeners.forEach(fn => fn());
   }
@@ -175,3 +169,18 @@ export async function setDoc(ref: Ref, data: any, options?: { merge?: boolean })
   }
   await commit();
 }
+
+/** 启动时读取线上最新内容（同源 + raw 双源），覆盖打包快照并通知所有订阅组件。 */
+export async function hydrateLiveContent(): Promise<void> {
+  const live = await fetchLiveContent();
+  if (!live) return;
+  state = {
+    settings: { ...clone(DEFAULT_SETTINGS), ...(live.settings || {}) },
+    projects: live.projects,
+    experiences: live.experiences,
+    publishedAt: live.publishedAt || '',
+  };
+  listeners.forEach(fn => fn());
+}
+
+void hydrateLiveContent();
