@@ -172,15 +172,31 @@ export async function setDoc(ref: Ref, data: any, options?: { merge?: boolean })
 
 /** 启动时读取线上最新内容（同源 + raw 双源），覆盖打包快照并通知所有订阅组件。 */
 export async function hydrateLiveContent(): Promise<void> {
-  const live = await fetchLiveContent();
-  if (!live) return;
-  state = {
-    settings: { ...clone(DEFAULT_SETTINGS), ...(live.settings || {}) },
-    projects: live.projects,
-    experiences: live.experiences,
-    publishedAt: live.publishedAt || '',
-  };
-  listeners.forEach(fn => fn());
+  try {
+    const live = await fetchLiveContent();
+    if (!live) return;
+    // 结构校验：任何一个集合不是数组都丢弃整份线上内容，避免脏数据导致页面崩溃。
+    if (!Array.isArray(live.projects) || !Array.isArray(live.experiences)) return;
+    const rawSettings = (live.settings && typeof live.settings === 'object') ? live.settings : {};
+    const categories = Array.isArray(rawSettings.categories) && rawSettings.categories.length > 0
+      ? rawSettings.categories.filter((c: unknown) => typeof c === 'string')
+      : clone(DEFAULT_SETTINGS).categories;
+    const settings = {
+      ...clone(DEFAULT_SETTINGS),
+      ...rawSettings,
+      categories: categories.includes('全部') ? categories : ['全部', ...categories],
+    };
+    // 已保存内容里带完整字段的对象为准，深层字段缺失时由组件内的 ?? 兜底。
+    state = {
+      settings,
+      projects: live.projects.filter((p: any) => p && typeof p === 'object'),
+      experiences: live.experiences.filter((e: any) => e && typeof e === 'object'),
+      publishedAt: typeof live.publishedAt === 'string' ? live.publishedAt : '',
+    };
+    listeners.forEach(fn => fn());
+  } catch (error) {
+    console.warn('[content] 线上内容加载失败，继续使用打包默认值', error);
+  }
 }
 
 void hydrateLiveContent();
