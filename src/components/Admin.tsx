@@ -172,6 +172,11 @@ export default function Admin() {
   }, []);
 
   useEffect(() => {
+    // 本机开发服务（仅监听 127.0.0.1）免口令直达：机器本身即凭据，发布令牌由服务端从系统钥匙串读取
+    if (Boolean((import.meta as any).env?.DEV)) {
+      localStorage.setItem('ding_admin_session', 'ding8190');
+    }
+
     // Check if passcode session exists
     if (localStorage.getItem('ding_admin_session') === 'ding8190') {
       setUser({ email: 'jding8190@gmail.com (博主管理员已认证)' } as any);
