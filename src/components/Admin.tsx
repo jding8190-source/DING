@@ -101,6 +101,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'categories' | 'site_modules' | 'experiences'>('projects');
   const [tokenDraft, setTokenDraft] = useState(getStoredToken());
+  const [coverBroken, setCoverBroken] = useState(false);
   const [tokenReady, setTokenReady] = useState(Boolean(getStoredToken()));
   
   const [projects, setProjects] = useState<any[]>([]);
@@ -398,7 +399,8 @@ export default function Admin() {
     try {
       const url = await uploadFile(file);
       setFormData(prev => ({ ...prev, imageUrl: url }));
-      showToast('封面已上传！');
+      setCoverBroken(false);
+      showToast('封面已上传并保存到线上仓库！');
     } catch (err) {
       showToast(err instanceof Error ? err.message : '封面上传失败');
     }
@@ -415,7 +417,7 @@ export default function Admin() {
       setFormData(prev => ({
         ...prev,
         images: [...prev.images, ...urls],
-        imageUrl: prev.imageUrl.trim() ? prev.imageUrl : urls[0],
+        imageUrl: urls[0],
       }));
       showToast(`已上传 ${urls.length} 张图片 / GIF 动图，已自动写入作品图集！`);
     } catch (err) {
@@ -1684,7 +1686,23 @@ export default function Admin() {
                         src={formData.imageUrl} 
                         alt="Cover Preview" 
                         className="w-full h-full object-cover"
+                        onLoad={() => setCoverBroken(false)}
+                        onError={() => setCoverBroken(true)}
                       />
+                      {coverBroken && (
+                        <div className="absolute inset-0 bg-zinc-950/92 flex flex-col items-center justify-center gap-1.5 text-center px-5">
+                          <p className="text-xs font-bold text-amber-300">封面加载失败</p>
+                          <p className="text-[11px] text-zinc-500 break-all max-h-8 overflow-hidden">{formData.imageUrl}</p>
+                          <p className="text-[11px] text-zinc-400">外链可能不可达（如 unsplash），请上传本地图片</p>
+                          <button
+                            type="button"
+                            onClick={() => coverFileInputRef.current?.click()}
+                            className="mt-1 bg-white text-black px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Upload size={13} /> 上传封面图片
+                          </button>
+                        </div>
+                      )}
                       <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                         <button
                           type="button"
