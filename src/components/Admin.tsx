@@ -11,9 +11,10 @@ import {
 } from 'firebase/auth';
 import {
   db, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy,
-  serverTimestamp, getDoc, onSnapshot, handleFirestoreError, OperationType, isWritable
+  serverTimestamp, getDoc, onSnapshot, handleFirestoreError, OperationType
 } from '../lib/localStore';
 import { uploadFile, uploadFiles } from '../lib/upload';
+import { isDev, getStoredToken, setStoredToken, clearStoredToken } from '../lib/remoteStore';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LogIn, 
@@ -99,6 +100,8 @@ export default function Admin() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'projects' | 'categories' | 'site_modules' | 'experiences'>('projects');
+  const [tokenDraft, setTokenDraft] = useState(getStoredToken());
+  const [tokenReady, setTokenReady] = useState(Boolean(getStoredToken()));
   
   const [projects, setProjects] = useState<any[]>([]);
   const [experiences, setExperiences] = useState<any[]>([]);
@@ -963,11 +966,46 @@ export default function Admin() {
         </div>
 
         {/* TAB 1: PROJECTS MANAGEMENT */}
-        {!isWritable && (
-          <div className="mb-8 p-4 rounded-2xl border border-amber-400/30 bg-amber-500/10 text-amber-200 text-xs leading-relaxed">
-            当前为线上只读版本。内容编辑与图片 / 视频 / GIF 上传请在本机运行 <code className="font-mono">npm run dev</code> 后打开 http://localhost:3000/#/admin 使用管理台；编辑结果通过 site-takeover/交付/push-to-github.sh 发布上线。
+        {/* 发布通道：保存即同步线上 */}
+        <div className="mb-8 p-4 rounded-2xl border border-emerald-400/25 bg-emerald-500/5 text-xs leading-relaxed">
+          <div className="flex flex-wrap items-center gap-2 text-emerald-200 font-bold uppercase tracking-wider">
+            <ShieldCheck size={14} /> 发布通道：{isDev ? '本机自动' : (tokenReady ? '已配置' : '待配置')}
           </div>
-        )}
+          <p className="text-zinc-400 mt-2">
+            {isDev
+              ? '本机运行：保存后自动同步到线上作品网站，无需额外配置或手动发布脚本。'
+              : tokenReady
+                ? '保存任意内容后会自动提交并同步到作品网站；媒体上传即时生效。'
+                : '首次使用需粘贴一次发布令牌（仅保存在当前浏览器，不写入网站源码）。之后保存即自动上线。'}
+          </p>
+          {!isDev && (
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <input
+                type="password"
+                value={tokenDraft}
+                onChange={(e) => setTokenDraft(e.target.value)}
+                placeholder="GitHub 个人访问令牌（ghp_ / github_pat_）"
+                className="flex-1 min-w-[220px] bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
+              />
+              <button
+                type="button"
+                onClick={() => { setStoredToken(tokenDraft); setTokenReady(Boolean(tokenDraft.trim())); showToast(tokenDraft.trim() ? '发布令牌已保存在当前浏览器' : '发布令牌已清除'); }}
+                className="flex items-center gap-1.5 bg-white/10 hover:bg-white text-white hover:text-black px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer"
+              >
+                <KeyRound size={13} /> {tokenReady ? '更新令牌' : '保存令牌'}
+              </button>
+              {tokenReady && (
+                <button
+                  type="button"
+                  onClick={() => { clearStoredToken(); setTokenDraft(''); setTokenReady(false); showToast('发布令牌已清除'); }}
+                  className="px-3 py-2 rounded-lg text-xs text-zinc-400 hover:text-white border border-white/10"
+                >
+                  清除
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {activeTab === 'projects' && (
           <div className="space-y-6">
@@ -1492,7 +1530,7 @@ export default function Admin() {
                   </>
                 ) : (
                   <>
-                    <Save size={15} /> 一键保存全站模块配置
+                    <Save size={15} /> 一键保存并发布到网站
                   </>
                 )}
               </button>
